@@ -38,7 +38,7 @@ tools/oss-cad-suite/examples/
 tools/oss-cad-suite/etc/
 tools/oss-cad-suite/license/
 
-# cc65 toolchain - exclude binaries and large directories but keep our custom config
+# cc65 toolchain - exclude binaries and large directories but keep cfg files
 tools/cc65/bin/
 tools/cc65/lib/
 tools/cc65/include/
@@ -47,8 +47,6 @@ tools/cc65/html/
 tools/cc65/samples/
 tools/cc65/target/
 tools/cc65/cc65.zip
-tools/cc65/cfg/*
-!tools/cc65/cfg/basic.cfg
 
 # Keep only the environment scripts and documentation
 # tools/oss-cad-suite/environment*
