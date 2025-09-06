@@ -1,0 +1,172 @@
+# ==============================================================================
+# .gitignore for 6502 FPGA Project
+# ==============================================================================
+
+# Build outputs and simulation files
+build/
+*.vcd
+*.gtkw
+*.fs
+*.json
+*_pnr.json
+*_sim
+*.out
+
+# FPGA vendor tool outputs
+*.bit
+*.bin
+*.rpt
+*.log
+*.jed
+*.sof
+*.pof
+
+# Simulation and synthesis temporary files
+work/
+transcript
+vsim.wlf
+modelsim.ini
+*.wdb
+*.ghw
+
+# Tool-specific directories and executables
+tools/oss-cad-suite/bin/
+tools/oss-cad-suite/lib/
+tools/oss-cad-suite/share/
+tools/oss-cad-suite/include/
+tools/oss-cad-suite/examples/
+tools/oss-cad-suite/etc/
+tools/oss-cad-suite/license/
+
+# Keep only the environment scripts and documentation
+# tools/oss-cad-suite/environment*
+# tools/oss-cad-suite/README
+# tools/oss-cad-suite/VERSION
+# tools/oss-cad-suite/*.bat
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Windows system files
+*.tmp
+*.temp
+~$*
+
+# Editor and IDE files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/.ropeproject
+*.swp
+*.swo
+*~
+.idea/
+*.sublime-*
+
+# Keep VS Code workspace configuration but ignore user-specific settings
+!.vscode/
+.vscode/*
+!.vscode/settings.json
+
+# Python bytecode (if any Python scripts are added)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Documentation build outputs
+docs/_build/
+docs/build/
+
+# Quartus II/Prime specific
+db/
+incremental_db/
+simulation/
+*.qws
+*.qpf
+*.qsf
+*.sopcinfo
+*.jdi
+*.pin
+*.summary
+*.done
+*.rpt
+*.smsg
+*.qarlog
+*.qdb
+
+# Vivado specific
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/sources_1/ip/
+*.xpr.lock
+vivado*.jou
+vivado*.log
+*.str
+*.xpe
+
+# Diamond/Lattice specific
+*.ldf.bak
+*.lpf.bak
+*.tcr
+*.dir/
+impl/
+synplify/
+*.plg
+*.edi
+
+# GoWin specific
+*.gprj.user
+*.gprj.backup
+*.prj.user
+place_route/
+synthesis/
+
+# Timing analysis
+*.tan.rpt
+*.pow.rpt
+*.map.rpt
+*.par.rpt
+
+# General FPGA
+*.xdc.bak
+*.sdc.bak
+*.ucf.bak
+*.lpf.bak
+*.pcf.bak
+
+# Compressed files (unless specifically needed)
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.tgz
+
+# Log files
+*.log
+*.out
+error.txt
+
+# Temporary shell completion files
+.bash_completion_temp
+.zsh_completion_temp
+
+# Git specific
+.git/
+!.gitignore
+!.gitattributes

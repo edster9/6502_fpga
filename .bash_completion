@@ -1,0 +1,49 @@
+#!/bin/bash
+# Simple, functional auto-completion for make targets
+
+# Enable completion
+shopt -s progcomp 2>/dev/null || true
+
+# Simple make completion function
+_make_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    
+    # Debug (remove this later)
+    if [[ "${DEBUG_COMPLETION:-0}" == "1" ]]; then
+        echo "DEBUG: cur='$cur', COMP_CWORD=$COMP_CWORD, COMP_WORDS=(${COMP_WORDS[@]})" >&2
+    fi
+    
+    # Get make targets using the proven working method
+    local targets=$(make -qp 2>/dev/null | awk -F':' '/^[a-zA-Z0-9][^$#\/\t=]*:([^=]|$)/ {split($1,A,/ /); for(i in A)print A[i]}' | sort -u)
+    
+    # Generate completions
+    COMPREPLY=($(compgen -W "$targets" -- "$cur"))
+    return 0
+}
+
+# Register the completion functions
+complete -F _make_complete make
+complete -F _make_complete m
+
+# Simple git completion
+_git_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local commands="add branch checkout clone commit diff fetch init log merge pull push remote reset status"
+    COMPREPLY=($(compgen -W "$commands" -- "$cur"))
+    return 0
+}
+
+complete -F _git_complete git
+
+# Test completion manually
+test_completion() {
+    echo "Testing make completion..."
+    local test_words=(make hello)
+    COMP_WORDS=("${test_words[@]}")
+    COMP_CWORD=1
+    _make_complete
+    echo "For 'make hello', found completions: ${COMPREPLY[@]}"
+}
+
+echo "✓ Basic auto-completion loaded"
+echo "💡 Test with: make hello<TAB> or run 'test_completion'"
