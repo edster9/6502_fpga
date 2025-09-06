@@ -152,13 +152,13 @@ $(BUILD_DIR)/hello_world.fs: $(BUILD_DIR)/hello_world_pnr.json
 6502_computer: $(BUILD_DIR)/6502_computer.fs
 	@echo "$(GREEN)✓ 6502 Computer built successfully for Tang Nano $(BOARD)$(NC)"
 
-$(BUILD_DIR)/6502_computer.json: $(PROJECTS_DIR)/6502_computer/src/6502_computer.v | $(BUILD_DIR)
+$(BUILD_DIR)/6502_computer.json: $(PROJECTS_DIR)/6502_computer/src/top.v $(PROJECTS_DIR)/6502_computer/src/cpu.v $(PROJECTS_DIR)/6502_computer/src/ALU.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing 6502_computer...$(NC)"
-	$(ENV_SETUP) && yosys -p "read_verilog $<; synth_gowin -json $@"
+	$(ENV_SETUP) && yosys -p "read_verilog -nolatches $^; hierarchy -check -top top; proc; opt; memory; opt; techmap; opt; clean; write_json $@"
 
 $(BUILD_DIR)/6502_computer_pnr.json: $(BUILD_DIR)/6502_computer.json
 	@echo "$(BLUE)Place & Route for 6502_computer...$(NC)"
-	$(ENV_SETUP) && nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
+	$(ENV_SETUP) && nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS_DIR)/tangnano9k_basic.cst
 
 $(BUILD_DIR)/6502_computer.fs: $(BUILD_DIR)/6502_computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502_computer...$(NC)"

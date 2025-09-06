@@ -1,0 +1,8 @@
+# Tang Nano 9K constraint file for pure 6502 CPU core
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+
+# Clock input - 27MHz crystal (Tang Nano 9K uses 27MHz)
+IO_LOC "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# No other pins needed for basic CPU testing

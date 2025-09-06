@@ -1,18 +1,8 @@
-// Minimal 6502 Computer Top-Level - CPU Only
-// No RAM, ROM, or I/O - just the CPU for testing
+// Pure 6502 CPU Core - No LEDs, No I/O
+// Absolute minimal implementation for FPGA testing
 
 module top (
-    input wire clk,           // 24MHz system clock
-    
-    // Status LEDs
-    output wire led_r,
-    output wire led_g,
-    output wire led_b,
-    
-    // Debug pins (optional)
-    output wire [15:0] debug_addr,
-    output wire [7:0] debug_data_out,
-    output wire debug_we
+    input wire clk            // 27MHz system clock from Tang Nano 9K
 );
 
     // System reset (for now, just tie low - CPU will start)
@@ -43,21 +33,5 @@ module top (
     // Simple memory stub - just return NOP instructions
     // This will make the CPU execute NOP continuously
     assign cpu_data_in = 8'hEA; // NOP instruction
-    
-    // LED status indicators
-    reg [23:0] counter;
-    always @(posedge clk) begin
-        counter <= counter + 1;
-    end
-    
-    // Show CPU activity on LEDs
-    assign led_r = counter[21];     // Slow blink - system running
-    assign led_g = cpu_we;          // Green when CPU writes
-    assign led_b = |cpu_addr[15:8]; // Blue when CPU accesses high memory
-    
-    // Debug outputs
-    assign debug_addr = cpu_addr;
-    assign debug_data_out = cpu_data_out;
-    assign debug_we = cpu_we;
 
 endmodule
