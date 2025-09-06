@@ -1,6 +1,26 @@
 # 6502 FPGA Computer
 
-A complete 6502-based computer implementation for the Tang Nano FPGA development board, featuring multiple learning projects and a comprehensive build system.
+A complete 6502-based computer implementation for the Tang Nano FPGA development board, featuring the proven **Arlet Ottens 6502 CPU core** and comprehensive development environment with simulation-first workflow.
+
+## 🎯 Project Highlights
+
+- ✅ **Working 6502 CPU**: Cycle-accurate Arlet Ottens implementation verified in simulation
+- ✅ **Complete Toolchain**: OSS CAD Suite with enhanced Makefile and auto-completion
+- ✅ **Educational Tutorials**: Boolean algebra and K-map derived digital logic examples  
+- ✅ **Professional Workflow**: Git integration, comprehensive testing, waveform analysis
+- 🔄 **Memory System**: RAM/ROM controllers and peripherals (next phase)
+
+## Quick Verification
+
+```bash
+# Test the 6502 CPU core
+make sim-6502_computer
+
+# View CPU execution in GTKWave
+make wave-6502_computer
+```
+
+**Expected Result**: CPU executes LDA/LDX/LDY/STA/JMP instructions correctly, with memory write confirmation.
 
 ## Project Structure
 
