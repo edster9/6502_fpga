@@ -1,64 +1,35 @@
-# 6502 Assembly Development Setup
-# 
-# This directory contains tools and setup for 6502 assembly programming
+# cc65 6502 Cross-Development Tools
 
-## cc65 Toolchain
-cc65 is the recommended toolchain for 6502 development. It includes:
-- ca65: 6502/65C02 macro assembler
-- ld65: linker for object files created by ca65
-- cc65: C compiler that generates 6502 assembly
-- od65: object file disassembler
-- ar65: archiver for object files
+This directory contains the cc65 cross-compiler toolchain for 6502 development.
 
-### Manual Installation (Windows)
-1. Download from: https://github.com/cc65/cc65/releases/latest
-2. Extract to `tools/cc65/`
-3. Add `tools/cc65/bin` to your PATH
+## Status: ✅ **INSTALLED AND WORKING**
 
-### Manual Installation (Linux/macOS)
+## Tools Available
+
+- `bin/ca65.exe` - 6502/65C02 macro assembler
+- `bin/ld65.exe` - Linker for object files  
+- `bin/cc65.exe` - C compiler for 6502 targets
+- `bin/ar65.exe` - Archiver for object files
+- `bin/od65.exe` - Object file disassembler
+- `cfg/basic.cfg` - Custom linker configuration for our 6502 system
+
+## Usage
+
+Assembly programs are built from `projects/6502_computer/asm/`:
+
 ```bash
-# Ubuntu/Debian
-sudo apt-get install cc65
-
-# macOS with Homebrew
-brew install cc65
-
-# Or build from source
-git clone https://github.com/cc65/cc65.git
-cd cc65
-make
+cd projects/6502_computer/asm
+./build.sh hello    # Builds hello.s into build/hello.bin
 ```
 
-## Usage Examples
+## Installation Notes
 
-### Simple Assembly Program
-```assembly
-; hello.s - Simple 6502 program
-.setcpu "6502"
+- Binary files are excluded from git via .gitignore
+- Only our custom `cfg/basic.cfg` and this README are tracked
+- To reinstall: download cc65 zip and extract to this directory
 
-.segment "CODE"
-reset:
-    LDA #$42        ; Load 0x42 into accumulator
-    STA $8000       ; Store to memory location $8000
-    JMP reset       ; Loop forever
+## More Info
 
-.segment "VECTORS"
-.addr reset         ; NMI vector
-.addr reset         ; Reset vector  
-.addr reset         ; IRQ vector
-```
-
-### Build Commands
-```bash
-# Assemble and link
-ca65 hello.s -o hello.o
-ld65 -C basic.cfg hello.o -o hello.bin
-
-# Or use cc65 with C code
-cc65 hello.c
-ca65 hello.s
-ld65 -C basic.cfg hello.o -o hello.bin
-```
-
-## Configuration Files
-The `cfg/` directory contains linker configuration files for different target systems.
+- Homepage: https://github.com/cc65/cc65
+- Documentation included in `html/` directory (when installed)
+- Example programs in `samples/` directory (when installed)
