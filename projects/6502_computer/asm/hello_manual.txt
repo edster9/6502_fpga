@@ -1,0 +1,29 @@
+; hello.s - Manual assembly reference
+; This shows how the assembly translates to machine code
+
+; Address  Machine Code    Assembly
+; --------  ------------    --------
+; $C000:    D8              CLD                     ; Clear decimal mode
+; $C001:    A2 FF           LDX #$FF               ; Load stack pointer  
+; $C003:    9A              TXS                    ; Set stack pointer
+; $C004:    A9 42           LDA #$42               ; Load hex 42 into A
+; $C006:    8D 00 80        STA $8000              ; Store A to $8000
+; $C009:    A2 33           LDX #$33               ; Load hex 33 into X
+; $C00B:    8E 01 80        STX $8001              ; Store X to $8001  
+; $C00E:    A0 24           LDY #$24               ; Load hex 24 into Y
+; $C010:    8C 02 80        STY $8002              ; Store Y to $8002
+; $C013:    AD 01 80        LDA $8001              ; Load from $8001
+; $C016:    18              CLC                    ; Clear carry
+; $C017:    69 10           ADC #$10               ; Add 16
+; $C019:    8D 03 80        STA $8003              ; Store result
+; $C01C:    A9 FF           LDA #$FF               ; Load completion marker
+; $C01E:    8D 04 80        STA $8004              ; Store to $8004
+; $C021:    4C 21 C0        JMP $C021              ; Infinite loop
+
+; Interrupt vectors (at end of 64K address space):
+; $FFFA:    00 C0           NMI vector  -> $C000
+; $FFFC:    00 C0           Reset vector -> $C000  
+; $FFFE:    00 C0           IRQ vector  -> $C000
+
+; Total program size: ~34 bytes plus vectors
+; This matches exactly what our testbench program does!
