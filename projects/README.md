@@ -39,19 +39,22 @@ Move to the `6502_computer` project for advanced topics:
 
 ## Build Commands
 
-### Using PowerShell Script
-```powershell
+### Using Make
+```bash
 # Build Hello World project
-.\build.ps1 -Target hello_world -Project hello_world
+make hello_world
 
 # Simulate Hello World
-.\build.ps1 -Target simulate -Project hello_world
+make sim-hello_world
 
 # Build 6502 Computer
-.\build.ps1 -Target 6502 -Project 6502_computer
+make 6502_computer
 
 # Program the FPGA
-.\build.ps1 -Target program -Project hello_world
+make prog-hello_world
+
+# Build for Tang Nano 20K
+make hello_world BOARD=20k
 ```
 
 ### Using VS Code Tasks

@@ -33,24 +33,26 @@
 ## 🚀 **Ready to Use Commands**
 
 ### Build & Program
-```powershell
-# Build blinky example
-.\build.ps1 blinky
+```bash
+# Build examples
+make hello_world
+make 6502_computer  
 
-# Simulate design  
-.\build.ps1 simulate
+# Simulate designs
+make sim-hello_world
+make sim-6502_computer
 
 # Program Tang Nano (when you get your board)
-.\build.ps1 program
+make prog-hello_world
 
 # Clean build files
-.\build.ps1 clean
+make clean
 ```
 
 ### VS Code Tasks
-- **Ctrl+Shift+P** → "Tasks: Run Task" → "Build Blinky"
-- **Ctrl+Shift+P** → "Tasks: Run Task" → "Simulate Blinky"  
-- **Ctrl+Shift+P** → "Tasks: Run Task" → "Program Blinky"
+- **Ctrl+Shift+P** → "Tasks: Run Task" → "Build Hello World"
+- **Ctrl+Shift+P** → "Tasks: Run Task" → "Simulate Hello World"  
+- **Ctrl+Shift+P** → "Tasks: Run Task" → "Program Hello World"
 
 ## 🎯 **Next Steps for 6502 Development**
 
@@ -58,13 +60,13 @@
 - ✅ Build system fully functional
 - ✅ Simulation environment ready
 - ✅ Basic project structure complete
-- ✅ I/O controller with LED control working
+- ✅ 6502 CPU core integrated and working
 
 ### 2. **When Tang Nano Arrives**
-```powershell
-# Program the working blinky example
-.\build.ps1 program
-# LEDs should start blinking in different patterns!
+```bash
+# Program the working 6502 computer
+make prog-6502_computer
+# Your 6502 computer will be running on FPGA!
 ```
 
 ### 3. **CPU Development Path**

@@ -178,9 +178,9 @@ module cpu_6502_tb;
             memory[16'h8002] == 8'h24 && 
             memory[16'h8003] == 8'h43 && 
             memory[16'h8004] == 8'hFF) begin
-            $display("✓ ALL TESTS PASSED! 6502 CPU is working correctly");
+            $display("[PASS] ALL TESTS PASSED! 6502 CPU is working correctly");
         end else begin
-            $display("✗ Some tests FAILED. Check memory contents above.");
+            $display("[FAIL] Some tests FAILED. Check memory contents above.");
         end
         
         $display("");

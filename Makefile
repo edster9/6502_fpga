@@ -40,72 +40,33 @@ else
     CONSTRAINTS := $(CONSTRAINTS_DIR)/tangnano9k.cst
 endif
 
-# OSS CAD Suite setup with automatic shell detection
+# OSS CAD Suite setup - bash only
 OSS_CAD_SUITE := tools/oss-cad-suite
 
-# Allow manual override of shell type via FORCE_BASH=1 or FORCE_POWERSHELL=1
-ifdef FORCE_POWERSHELL
-    DETECTED_SHELL := windows
-else ifdef FORCE_BASH
-    DETECTED_SHELL := bash
-else ifeq ($(OS),Windows_NT)
-    # Detect shell environment for Windows
-    # Try to detect if we have bash-like commands available
-    HAS_BASH := $(shell bash -c 'echo bash_available' 2>/dev/null)
-    ifeq ($(HAS_BASH),bash_available)
-        DETECTED_SHELL := bash
-    else
-        DETECTED_SHELL := windows
-    endif
-else
-    DETECTED_SHELL := unix
-endif
+# Environment setup using bash and sourcing
+ENV_SETUP := eval $$(./run_with_env.sh) &&
+SHELL_TYPE := bash
+SHELL := /bin/bash
 
-# Configure environment based on detected/forced shell
-ifeq ($(DETECTED_SHELL),bash)
-    # Git Bash or similar - use environment sourcing
-    ENV_SETUP := eval $$(./run_with_env.sh)
-    SHELL_TYPE := bash
-    SHELL := /bin/bash
-    # Define cleanup commands for bash
-    define CLEAN_ALL
-		rm -rf $(BUILD_DIR)/*
-    endef
-    define CLEAN_PROJECT
-		rm -f $(BUILD_DIR)/$(1)*
-    endef
-else ifeq ($(DETECTED_SHELL),windows)
-    # PowerShell, CMD, or other Windows shell - use batch wrapper
-    ENV_SETUP := run_with_env.bat
-    SHELL_TYPE := windows
-    # Define cleanup commands for PowerShell
-    define CLEAN_ALL
-		powershell -Command "Remove-Item -Path '$(BUILD_DIR)/*' -Recurse -Force -ErrorAction SilentlyContinue"
-    endef
-    define CLEAN_PROJECT
-		powershell -Command "Remove-Item -Path '$(BUILD_DIR)/$(1)*' -Force -ErrorAction SilentlyContinue"
-    endef
-else
-    # Linux/Unix systems
-    ENV_SETUP := source $(OSS_CAD_SUITE)/environment &&
-    SHELL_TYPE := unix
-    # Define cleanup commands for Unix
-    define CLEAN_ALL
-		rm -rf $(BUILD_DIR)/*
-    endef
-    define CLEAN_PROJECT
-		rm -f $(BUILD_DIR)/$(1)*
-    endef
-endif
+# Define cleanup commands
+define CLEAN_ALL
+	rm -rf $(BUILD_DIR)/*
+endef
 
-# Colors for output (Windows-compatible)
+define CLEAN_PROJECT
+	rm -f $(BUILD_DIR)/$(1)*
+endef
+
+# Colors for output - disabled on Windows due to Git Bash compatibility
 ifeq ($(OS),Windows_NT)
+    # On Windows, disable colors to avoid control character issues
     GREEN := 
     BLUE := 
     YELLOW := 
     RED := 
     NC := 
 else
+    # On Unix systems, colors should work fine
     GREEN := \033[32m
     BLUE := \033[34m
     YELLOW := \033[33m
@@ -133,36 +94,36 @@ $(BUILD_DIR):
 # Hello World Project
 .PHONY: hello_world
 hello_world: $(BUILD_DIR)/hello_world.fs
-	@echo "$(GREEN)✓ Hello World built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(GREEN)[OK] Hello World built successfully for Tang Nano $(BOARD)$(NC)"
 
 $(BUILD_DIR)/hello_world.json: $(PROJECTS_DIR)/hello_world/src/hello_world.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing hello_world...$(NC)"
-	$(ENV_SETUP) && yosys -p "read_verilog $<; synth_gowin -json $@"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
 
 $(BUILD_DIR)/hello_world_pnr.json: $(BUILD_DIR)/hello_world.json
 	@echo "$(BLUE)Place & Route for hello_world...$(NC)"
-	$(ENV_SETUP) && nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
 
 $(BUILD_DIR)/hello_world.fs: $(BUILD_DIR)/hello_world_pnr.json
 	@echo "$(BLUE)Generating bitstream for hello_world...$(NC)"
-	$(ENV_SETUP) && gowin_pack -d $(DEVICE) -o $@ $<
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
 # 6502 Computer Project
 .PHONY: 6502_computer
 6502_computer: $(BUILD_DIR)/6502_computer.fs
-	@echo "$(GREEN)✓ 6502 Computer built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(GREEN)[OK] 6502 Computer built successfully for Tang Nano $(BOARD)$(NC)"
 
 $(BUILD_DIR)/6502_computer.json: $(PROJECTS_DIR)/6502_computer/src/top.v $(PROJECTS_DIR)/6502_computer/src/cpu.v $(PROJECTS_DIR)/6502_computer/src/ALU.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing 6502_computer...$(NC)"
-	$(ENV_SETUP) && yosys -p "read_verilog -nolatches $^; hierarchy -check -top top; proc; opt; memory; opt; techmap; opt; clean; write_json $@"
+	$(ENV_SETUP) yosys -p "read_verilog -nolatches $^; hierarchy -check -top top; proc; opt; memory; opt; techmap; opt; clean; write_json $@"
 
 $(BUILD_DIR)/6502_computer_pnr.json: $(BUILD_DIR)/6502_computer.json
 	@echo "$(BLUE)Place & Route for 6502_computer...$(NC)"
-	$(ENV_SETUP) && nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS_DIR)/tangnano9k_basic.cst
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS_DIR)/tangnano9k_basic.cst
 
 $(BUILD_DIR)/6502_computer.fs: $(BUILD_DIR)/6502_computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502_computer...$(NC)"
-	$(ENV_SETUP) && gowin_pack -d $(DEVICE) -o $@ $<
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
 # Tutorial Steps (Dynamic targets for step1, step2, step3, step4)
 .PHONY: tutorial-step1 tutorial-step2 tutorial-step3 tutorial-step4
@@ -173,16 +134,16 @@ tutorial-step4: $(BUILD_DIR)/tutorial_step4.fs
 
 $(BUILD_DIR)/tutorial_step%.json: $(PROJECTS_DIR)/tutorial/src/step%.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing tutorial step$*...$(NC)"
-	$(ENV_SETUP) && yosys -p "read_verilog $<; synth_gowin -json $@"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
 
 $(BUILD_DIR)/tutorial_step%_pnr.json: $(BUILD_DIR)/tutorial_step%.json
 	@echo "$(BLUE)Place & Route for tutorial step$*...$(NC)"
-	$(ENV_SETUP) && nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
 
 $(BUILD_DIR)/tutorial_step%.fs: $(BUILD_DIR)/tutorial_step%_pnr.json
 	@echo "$(BLUE)Generating bitstream for tutorial step$*...$(NC)"
-	$(ENV_SETUP) && gowin_pack -d $(DEVICE) -o $@ $<
-	@echo "$(GREEN)✓ Tutorial step$* built successfully for Tang Nano $(BOARD)$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+	@echo "$(GREEN)[OK] Tutorial step$* built successfully for Tang Nano $(BOARD)$(NC)"
 
 # ==============================================================================
 # SIMULATION TARGETS  
@@ -191,72 +152,72 @@ $(BUILD_DIR)/tutorial_step%.fs: $(BUILD_DIR)/tutorial_step%_pnr.json
 .PHONY: sim-hello_world sim-6502_computer sim-tutorial-step1 sim-tutorial-step2 sim-tutorial-step3 sim-tutorial-step4
 
 sim-hello_world: $(BUILD_DIR)/hello_world.vcd
-	@echo "$(GREEN)✓ Hello World simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Hello World simulation completed$(NC)"
 
 .PHONY: sim-hello_world sim-6502_computer sim-tutorial-step1 sim-tutorial-step2 sim-tutorial-step3 sim-tutorial-step4
 .PHONY: run-sim-tutorial-step1 run-sim-tutorial-step2 run-sim-tutorial-step3 run-sim-tutorial-step4
 
 # Standard simulation targets (check if VCD exists)
 sim-hello_world: $(BUILD_DIR)/hello_world.vcd
-	@echo "$(GREEN)✓ Hello World simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Hello World simulation completed$(NC)"
 
 sim-6502_computer: $(BUILD_DIR)/6502_computer.vcd
-	@echo "$(GREEN)✓ 6502 Computer simulation completed$(NC)"
+	@echo "$(GREEN)[OK] 6502 Computer simulation completed$(NC)"
 
 sim-tutorial-step1: $(BUILD_DIR)/tutorial_step1.vcd
-	@echo "$(GREEN)✓ Tutorial step 1 simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 1 simulation completed$(NC)"
 
 sim-tutorial-step2: $(BUILD_DIR)/tutorial_step2.vcd
-	@echo "$(GREEN)✓ Tutorial step 2 simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 2 simulation completed$(NC)"
 
 sim-tutorial-step3: $(BUILD_DIR)/tutorial_step3.vcd
-	@echo "$(GREEN)✓ Tutorial step 3 simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 3 simulation completed$(NC)"
 
 sim-tutorial-step4: $(BUILD_DIR)/tutorial_step4.vcd
-	@echo "$(GREEN)✓ Tutorial step 4 simulation completed$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 4 simulation completed$(NC)"
 
 # Force simulation targets (always run)
 run-sim-tutorial-step1:
 	@echo "$(BLUE)Running tutorial step 1 simulation...$(NC)"
 	@-$(MAKE) clean-tutorial-step1
 	@$(MAKE) $(BUILD_DIR)/tutorial_step1.vcd
-	@echo "$(GREEN)✓ Tutorial step 1 simulation completed and ready$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 1 simulation completed and ready$(NC)"
 
 run-sim-tutorial-step2:
 	@echo "$(BLUE)Running tutorial step 2 simulation...$(NC)"
 	@-$(MAKE) clean-tutorial-step2
 	@$(MAKE) $(BUILD_DIR)/tutorial_step2.vcd
-	@echo "$(GREEN)✓ Tutorial step 2 simulation completed and ready$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 2 simulation completed and ready$(NC)"
 
 run-sim-tutorial-step3:
 	@echo "$(BLUE)Running tutorial step 3 simulation...$(NC)"
 	@-$(MAKE) clean-tutorial-step3
 	@$(MAKE) $(BUILD_DIR)/tutorial_step3.vcd
-	@echo "$(GREEN)✓ Tutorial step 3 simulation completed and ready$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 3 simulation completed and ready$(NC)"
 
 run-sim-tutorial-step4:
 	@echo "$(BLUE)Running tutorial step 4 simulation...$(NC)"
 	@-$(MAKE) clean-tutorial-step4
 	@$(MAKE) $(BUILD_DIR)/tutorial_step4.vcd
-	@echo "$(GREEN)✓ Tutorial step 4 simulation completed and ready$(NC)"
+	@echo "$(GREEN)[OK] Tutorial step 4 simulation completed and ready$(NC)"
 
 # Simulation build rules
 $(BUILD_DIR)/hello_world_sim: $(PROJECTS_DIR)/hello_world/testbench/hello_world_tb.v $(PROJECTS_DIR)/hello_world/src/hello_world.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling hello_world simulation...$(NC)"
-	$(ENV_SETUP) && iverilog -o $@ $^
+	$(ENV_SETUP) iverilog -o $@ $^
 
 $(BUILD_DIR)/6502_computer_sim: $(PROJECTS_DIR)/6502_computer/testbench/cpu_6502_tb.v $(PROJECTS_DIR)/6502_computer/src/cpu.v $(PROJECTS_DIR)/6502_computer/src/ALU.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling 6502 CPU simulation...$(NC)"
-	$(ENV_SETUP) && iverilog -o $@ $^
+	$(ENV_SETUP) iverilog -o $@ $^
 
 $(BUILD_DIR)/tutorial_step%_sim: $(PROJECTS_DIR)/tutorial/testbench/step%_tb.v $(PROJECTS_DIR)/tutorial/src/step%.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling tutorial step$* simulation...$(NC)"
-	$(ENV_SETUP) && iverilog -o $@ $^
+	$(ENV_SETUP) iverilog -o $@ $^
 
 # VCD generation rules
 $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 	@echo "$(BLUE)Running simulation for $*...$(NC)"
-	$(ENV_SETUP) && vvp $< && echo "$(GREEN)Waveform saved to $@$(NC)"
+	$(ENV_SETUP) vvp $< && echo "$(GREEN)Waveform saved to $@$(NC)"
 
 # ==============================================================================
 # GTKWAVE TARGETS
@@ -266,27 +227,27 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 
 wave-hello_world: $(BUILD_DIR)/hello_world.vcd
 	@echo "$(BLUE)Opening GTKWave for hello_world...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 wave-6502_computer: $(BUILD_DIR)/6502_computer.vcd
 	@echo "$(BLUE)Opening GTKWave for 6502_computer...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 wave-tutorial-step1: $(BUILD_DIR)/tutorial_step1.vcd
 	@echo "$(BLUE)Opening GTKWave for tutorial step 1...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 wave-tutorial-step2: $(BUILD_DIR)/tutorial_step2.vcd
 	@echo "$(BLUE)Opening GTKWave for tutorial step 2...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 wave-tutorial-step3: $(BUILD_DIR)/tutorial_step3.vcd
 	@echo "$(BLUE)Opening GTKWave for tutorial step 3...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 wave-tutorial-step4: $(BUILD_DIR)/tutorial_step4.vcd
 	@echo "$(BLUE)Opening GTKWave for tutorial step 4...$(NC)"
-	$(ENV_SETUP) && gtkwave $<
+	$(ENV_SETUP) gtkwave $<
 
 # ==============================================================================
 # PROGRAMMING TARGETS
@@ -296,18 +257,18 @@ wave-tutorial-step4: $(BUILD_DIR)/tutorial_step4.vcd
 
 prog-hello_world: $(BUILD_DIR)/hello_world.fs
 	@echo "$(BLUE)Programming hello_world to Tang Nano...$(NC)"
-	$(ENV_SETUP) && openFPGALoader -b tangnano $<
-	@echo "$(GREEN)✓ hello_world programmed successfully$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] hello_world programmed successfully$(NC)"
 
 prog-6502_computer: $(BUILD_DIR)/6502_computer.fs
 	@echo "$(BLUE)Programming 6502_computer to Tang Nano...$(NC)"
-	$(ENV_SETUP) && openFPGALoader -b tangnano $<
-	@echo "$(GREEN)✓ 6502_computer programmed successfully$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] 6502_computer programmed successfully$(NC)"
 
 prog-tutorial-step%: $(BUILD_DIR)/tutorial_step%.fs
 	@echo "$(BLUE)Programming tutorial step$* to Tang Nano...$(NC)"
-	$(ENV_SETUP) && openFPGALoader -b tangnano $<
-	@echo "$(GREEN)✓ tutorial step$* programmed successfully$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] tutorial step$* programmed successfully$(NC)"
 
 # ==============================================================================
 # UTILITY TARGETS
@@ -315,41 +276,41 @@ prog-tutorial-step%: $(BUILD_DIR)/tutorial_step%.fs
 
 clean:
 	@echo "$(YELLOW)Cleaning build directory...$(NC)"
-	$(ENV_SETUP) && $(CLEAN_ALL)
-	@echo "$(GREEN)✓ Build directory cleaned$(NC)"
+	$(ENV_SETUP) $(CLEAN_ALL)
+	@echo "$(GREEN)[OK] Build directory cleaned$(NC)"
 
 # Project-specific clean targets
 .PHONY: clean-hello_world clean-6502_computer clean-tutorial-step1 clean-tutorial-step2 clean-tutorial-step3 clean-tutorial-step4
 
 clean-hello_world:
 	@echo "$(YELLOW)Cleaning Hello World build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,hello_world)
-	@echo "$(GREEN)✓ Hello World build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,hello_world)
+	@echo "$(GREEN)[OK] Hello World build files cleaned$(NC)"
 
 clean-6502_computer:
 	@echo "$(YELLOW)Cleaning 6502 Computer build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,6502_computer)
-	@echo "$(GREEN)✓ 6502 Computer build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,6502_computer)
+	@echo "$(GREEN)[OK] 6502 Computer build files cleaned$(NC)"
 
 clean-tutorial-step1:
 	@echo "$(YELLOW)Cleaning Tutorial Step 1 build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,tutorial_step1)
-	@echo "$(GREEN)✓ Tutorial Step 1 build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step1)
+	@echo "$(GREEN)[OK] Tutorial Step 1 build files cleaned$(NC)"
 
 clean-tutorial-step2:
 	@echo "$(YELLOW)Cleaning Tutorial Step 2 build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,tutorial_step2)
-	@echo "$(GREEN)✓ Tutorial Step 2 build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step2)
+	@echo "$(GREEN)[OK] Tutorial Step 2 build files cleaned$(NC)"
 
 clean-tutorial-step3:
 	@echo "$(YELLOW)Cleaning Tutorial Step 3 build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,tutorial_step3)
-	@echo "$(GREEN)✓ Tutorial Step 3 build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step3)
+	@echo "$(GREEN)[OK] Tutorial Step 3 build files cleaned$(NC)"
 
 clean-tutorial-step4:
 	@echo "$(YELLOW)Cleaning Tutorial Step 4 build files...$(NC)"
-	$(ENV_SETUP) && $(call CLEAN_PROJECT,tutorial_step4)
-	@echo "$(GREEN)✓ Tutorial Step 4 build files cleaned$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step4)
+	@echo "$(GREEN)[OK] Tutorial Step 4 build files cleaned$(NC)"
 
 list-projects:
 	@echo "$(BLUE)Available Projects:$(NC)"

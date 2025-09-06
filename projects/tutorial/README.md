@@ -9,39 +9,41 @@ This tutorial project contains step-by-step examples to learn FPGA development w
 - Demonstrates basic clock dividers and counters
 - Uses only the red LED
 
-**Build:** `.\build.ps1 -Target tutorial -Project tutorial -File step1 -Board 9k`
+**Build:** `make tutorial-step1`
 
 ### Step 2: RGB Color Cycling (`step2.v`)
 - Cycles through different colors on the RGB LED
 - Demonstrates state machines
 - Changes color every 0.5 seconds
 
-**Build:** `.\build.ps1 -Target tutorial -Project tutorial -File step2 -Board 9k`
+**Build:** `make tutorial-step2`
 
 ### Step 3: PWM Brightness Control (`step3.v`)
 - Uses PWM to create a breathing effect on the red LED
 - Demonstrates PWM generation and brightness control
 - Shows how to create smooth transitions
 
-**Build:** `.\build.ps1 -Target tutorial -Project tutorial -File step3 -Board 9k`
+**Build:** `make tutorial-step3`
 
 ### Step 4: Button Debouncing (`step4.v`)
 - Demonstrates button input handling (simulated since no physical buttons)
 - Shows proper debouncing techniques
 - Toggles LEDs on simulated button presses
 
-**Build:** `.\build.ps1 -Target tutorial -Project tutorial -File step4 -Board 9k`
+**Build:** `make tutorial-step4`
 
 ## Usage
 
 To build any tutorial step:
-```powershell
-.\build.ps1 -Target tutorial -Project tutorial -File <stepname> -Board <9k|20k>
+```bash
+make tutorial-step<number>
+# or for Tang Nano 20K:
+make tutorial-step<number> BOARD=20k
 ```
 
 To program the FPGA:
-```powershell
-.\build.ps1 -Target program -Project tutorial -File <stepname>
+```bash
+make prog-tutorial-step<number>
 ```
 
 ## Adding New Steps
@@ -57,7 +59,7 @@ To program the FPGA:
        output led_b        // Blue LED output
    );
    ```
-4. Build with: `.\build.ps1 -Target tutorial -Project tutorial -File stepX -Board 9k`
+4. Build with: `make tutorial-step<number>`
 
 ## Notes
 
