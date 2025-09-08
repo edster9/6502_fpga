@@ -15,7 +15,6 @@
 #   make sim-hello-world         - Simulate hello-world project
 #   make wave-hello-world        - View hello-world waveforms in GTKWave
 #   make prog-hello-world        - Program hello-world to Tang Nano
-#   make tutorial-step1          - Build tutorial step1
 #   make clean                   - Clean all build files
 # ==============================================================================
 
@@ -78,10 +77,10 @@ endif
 # MAIN TARGETS
 # ==============================================================================
 
-.PHONY: all help clean clean-hello-world clean-6502-computer clean-tutorial-step1 clean-tutorial-step2 clean-tutorial-step3 clean-tutorial-step4
+.PHONY: all help clean clean-hello-world clean-6502-computer
 .DEFAULT_GOAL := help
 
-all: hello-world tutorial-step1
+all: hello-world
 
 # Create build directory
 $(BUILD_DIR):
@@ -125,37 +124,11 @@ $(BUILD_DIR)/6502-computer.fs: $(BUILD_DIR)/6502-computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502-computer...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
-# Tutorial Steps (Dynamic targets for step1, step2, step3, step4)
-.PHONY: tutorial-step1 tutorial-step2 tutorial-step3 tutorial-step4
-tutorial-step1: $(BUILD_DIR)/tutorial_step1.fs
-tutorial-step2: $(BUILD_DIR)/tutorial_step2.fs  
-tutorial-step3: $(BUILD_DIR)/tutorial_step3.fs
-tutorial-step4: $(BUILD_DIR)/tutorial_step4.fs
-
-$(BUILD_DIR)/tutorial_step%.json: $(PROJECTS_DIR)/tutorial/src/step%.v | $(BUILD_DIR)
-	@echo "$(BLUE)Synthesizing tutorial step$*...$(NC)"
-	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
-
-$(BUILD_DIR)/tutorial_step%_pnr.json: $(BUILD_DIR)/tutorial_step%.json
-	@echo "$(BLUE)Place & Route for tutorial step$*...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
-
-$(BUILD_DIR)/tutorial_step%.fs: $(BUILD_DIR)/tutorial_step%_pnr.json
-	@echo "$(BLUE)Generating bitstream for tutorial step$*...$(NC)"
-	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
-	@echo "$(GREEN)[OK] Tutorial step$* built successfully for Tang Nano $(BOARD)$(NC)"
-
 # ==============================================================================
 # SIMULATION TARGETS  
 # ==============================================================================
 
-.PHONY: sim-hello-world sim-6502-computer sim-tutorial-step1 sim-tutorial-step2 sim-tutorial-step3 sim-tutorial-step4
-
-sim-hello-world: $(BUILD_DIR)/hello-world.vcd
-	@echo "$(GREEN)[OK] Hello World simulation completed$(NC)"
-
-.PHONY: sim-hello-world sim-6502-computer sim-tutorial-step1 sim-tutorial-step2 sim-tutorial-step3 sim-tutorial-step4
-.PHONY: run-sim-tutorial-step1 run-sim-tutorial-step2 run-sim-tutorial-step3 run-sim-tutorial-step4
+.PHONY: sim-hello-world sim-6502-computer
 
 # Standard simulation targets (check if VCD exists)
 sim-hello-world: $(BUILD_DIR)/hello-world.vcd
@@ -164,43 +137,6 @@ sim-hello-world: $(BUILD_DIR)/hello-world.vcd
 sim-6502-computer: $(BUILD_DIR)/6502-computer.vcd
 	@echo "$(GREEN)[OK] 6502 Computer simulation completed$(NC)"
 
-sim-tutorial-step1: $(BUILD_DIR)/tutorial_step1.vcd
-	@echo "$(GREEN)[OK] Tutorial step 1 simulation completed$(NC)"
-
-sim-tutorial-step2: $(BUILD_DIR)/tutorial_step2.vcd
-	@echo "$(GREEN)[OK] Tutorial step 2 simulation completed$(NC)"
-
-sim-tutorial-step3: $(BUILD_DIR)/tutorial_step3.vcd
-	@echo "$(GREEN)[OK] Tutorial step 3 simulation completed$(NC)"
-
-sim-tutorial-step4: $(BUILD_DIR)/tutorial_step4.vcd
-	@echo "$(GREEN)[OK] Tutorial step 4 simulation completed$(NC)"
-
-# Force simulation targets (always run)
-run-sim-tutorial-step1:
-	@echo "$(BLUE)Running tutorial step 1 simulation...$(NC)"
-	@-$(MAKE) clean-tutorial-step1
-	@$(MAKE) $(BUILD_DIR)/tutorial_step1.vcd
-	@echo "$(GREEN)[OK] Tutorial step 1 simulation completed and ready$(NC)"
-
-run-sim-tutorial-step2:
-	@echo "$(BLUE)Running tutorial step 2 simulation...$(NC)"
-	@-$(MAKE) clean-tutorial-step2
-	@$(MAKE) $(BUILD_DIR)/tutorial_step2.vcd
-	@echo "$(GREEN)[OK] Tutorial step 2 simulation completed and ready$(NC)"
-
-run-sim-tutorial-step3:
-	@echo "$(BLUE)Running tutorial step 3 simulation...$(NC)"
-	@-$(MAKE) clean-tutorial-step3
-	@$(MAKE) $(BUILD_DIR)/tutorial_step3.vcd
-	@echo "$(GREEN)[OK] Tutorial step 3 simulation completed and ready$(NC)"
-
-run-sim-tutorial-step4:
-	@echo "$(BLUE)Running tutorial step 4 simulation...$(NC)"
-	@-$(MAKE) clean-tutorial-step4
-	@$(MAKE) $(BUILD_DIR)/tutorial_step4.vcd
-	@echo "$(GREEN)[OK] Tutorial step 4 simulation completed and ready$(NC)"
-
 # Simulation build rules
 $(BUILD_DIR)/hello-world_sim: $(PROJECTS_DIR)/hello-world/testbench/hello-world_tb.v $(PROJECTS_DIR)/hello-world/src/hello-world.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling hello-world simulation...$(NC)"
@@ -208,10 +144,6 @@ $(BUILD_DIR)/hello-world_sim: $(PROJECTS_DIR)/hello-world/testbench/hello-world_
 
 $(BUILD_DIR)/6502-computer_sim: $(PROJECTS_DIR)/6502-computer/testbench/cpu_6502_tb.v $(PROJECTS_DIR)/6502-computer/src/cpu.v $(PROJECTS_DIR)/6502-computer/src/ALU.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling 6502 CPU simulation...$(NC)"
-	$(ENV_SETUP) iverilog -o $@ $^
-
-$(BUILD_DIR)/tutorial_step%_sim: $(PROJECTS_DIR)/tutorial/testbench/step%_tb.v $(PROJECTS_DIR)/tutorial/src/step%.v | $(BUILD_DIR)
-	@echo "$(BLUE)Compiling tutorial step$* simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
 # VCD generation rules
@@ -223,7 +155,7 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 # GTKWAVE TARGETS
 # ==============================================================================
 
-.PHONY: wave-hello-world wave-6502-computer wave-tutorial-step1 wave-tutorial-step2 wave-tutorial-step3 wave-tutorial-step4
+.PHONY: wave-hello-world wave-6502-computer
 
 wave-hello-world: $(BUILD_DIR)/hello-world.vcd
 	@echo "$(BLUE)Opening GTKWave for hello-world...$(NC)"
@@ -233,27 +165,11 @@ wave-6502-computer: $(BUILD_DIR)/6502-computer.vcd
 	@echo "$(BLUE)Opening GTKWave for 6502-computer...$(NC)"
 	$(ENV_SETUP) gtkwave $<
 
-wave-tutorial-step1: $(BUILD_DIR)/tutorial_step1.vcd
-	@echo "$(BLUE)Opening GTKWave for tutorial step 1...$(NC)"
-	$(ENV_SETUP) gtkwave $<
-
-wave-tutorial-step2: $(BUILD_DIR)/tutorial_step2.vcd
-	@echo "$(BLUE)Opening GTKWave for tutorial step 2...$(NC)"
-	$(ENV_SETUP) gtkwave $<
-
-wave-tutorial-step3: $(BUILD_DIR)/tutorial_step3.vcd
-	@echo "$(BLUE)Opening GTKWave for tutorial step 3...$(NC)"
-	$(ENV_SETUP) gtkwave $<
-
-wave-tutorial-step4: $(BUILD_DIR)/tutorial_step4.vcd
-	@echo "$(BLUE)Opening GTKWave for tutorial step 4...$(NC)"
-	$(ENV_SETUP) gtkwave $<
-
 # ==============================================================================
 # PROGRAMMING TARGETS
 # ==============================================================================
 
-.PHONY: prog-hello-world prog-6502-computer prog-tutorial-step1 prog-tutorial-step2 prog-tutorial-step3 prog-tutorial-step4
+.PHONY: prog-hello-world prog-6502-computer
 
 prog-hello-world: $(BUILD_DIR)/hello-world.fs
 	@echo "$(BLUE)Programming hello-world to Tang Nano...$(NC)"
@@ -265,11 +181,6 @@ prog-6502-computer: $(BUILD_DIR)/6502-computer.fs
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] 6502-computer programmed successfully$(NC)"
 
-prog-tutorial-step%: $(BUILD_DIR)/tutorial_step%.fs
-	@echo "$(BLUE)Programming tutorial step$* to Tang Nano...$(NC)"
-	$(ENV_SETUP) openFPGALoader -b tangnano $<
-	@echo "$(GREEN)[OK] tutorial step$* programmed successfully$(NC)"
-
 # ==============================================================================
 # UTILITY TARGETS
 # ==============================================================================
@@ -280,7 +191,7 @@ clean:
 	@echo "$(GREEN)[OK] Build directory cleaned$(NC)"
 
 # Project-specific clean targets
-.PHONY: clean-hello-world clean-6502-computer clean-tutorial-step1 clean-tutorial-step2 clean-tutorial-step3 clean-tutorial-step4
+.PHONY: clean-hello-world clean-6502-computer
 
 clean-hello-world:
 	@echo "$(YELLOW)Cleaning Hello World build files...$(NC)"
@@ -292,34 +203,10 @@ clean-6502-computer:
 	$(ENV_SETUP) $(call CLEAN_PROJECT,6502-computer)
 	@echo "$(GREEN)[OK] 6502 Computer build files cleaned$(NC)"
 
-clean-tutorial-step1:
-	@echo "$(YELLOW)Cleaning Tutorial Step 1 build files...$(NC)"
-	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step1)
-	@echo "$(GREEN)[OK] Tutorial Step 1 build files cleaned$(NC)"
-
-clean-tutorial-step2:
-	@echo "$(YELLOW)Cleaning Tutorial Step 2 build files...$(NC)"
-	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step2)
-	@echo "$(GREEN)[OK] Tutorial Step 2 build files cleaned$(NC)"
-
-clean-tutorial-step3:
-	@echo "$(YELLOW)Cleaning Tutorial Step 3 build files...$(NC)"
-	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step3)
-	@echo "$(GREEN)[OK] Tutorial Step 3 build files cleaned$(NC)"
-
-clean-tutorial-step4:
-	@echo "$(YELLOW)Cleaning Tutorial Step 4 build files...$(NC)"
-	$(ENV_SETUP) $(call CLEAN_PROJECT,tutorial_step4)
-	@echo "$(GREEN)[OK] Tutorial Step 4 build files cleaned$(NC)"
-
 list-projects:
 	@echo "$(BLUE)Available Projects:$(NC)"
 	@echo "  hello-world     - Basic LED Hello World"
 	@echo "  6502-computer   - 6502 CPU Computer"
-	@echo "  tutorial-step1  - Tutorial Step 1: Basic LED Toggle"
-	@echo "  tutorial-step2  - Tutorial Step 2: RGB Color Cycling"
-	@echo "  tutorial-step3  - Tutorial Step 3: PWM Breathing Effect"
-	@echo "  tutorial-step4  - Tutorial Step 4: Button Debouncing"
 
 list-boards:
 	@echo "$(BLUE)Supported Boards:$(NC)"
@@ -340,43 +227,23 @@ help:
 	@echo "$(GREEN)BUILD TARGETS:$(NC)"
 	@echo "  hello-world          Build Hello World project"
 	@echo "  6502-computer        Build 6502 Computer project"
-	@echo "  tutorial-step1       Build Tutorial Step 1"
-	@echo "  tutorial-step2       Build Tutorial Step 2"
-	@echo "  tutorial-step3       Build Tutorial Step 3"
-	@echo "  tutorial-step4       Build Tutorial Step 4"
 	@echo ""
 	@echo "$(GREEN)SIMULATION TARGETS:$(NC)"
 	@echo "  sim-hello-world      Simulate Hello World"
 	@echo "  sim-6502-computer    Simulate 6502 Computer"
-	@echo "  sim-tutorial-step1   Simulate Tutorial Step 1"
-	@echo "  sim-tutorial-step2   Simulate Tutorial Step 2"
-	@echo "  sim-tutorial-step3   Simulate Tutorial Step 3"
-	@echo "  sim-tutorial-step4   Simulate Tutorial Step 4"
 	@echo ""
 	@echo "$(GREEN)GTKWAVE TARGETS:$(NC)"
 	@echo "  wave-hello-world     View Hello World waveforms"
 	@echo "  wave-6502-computer   View 6502 Computer waveforms"
-	@echo "  wave-tutorial-step1  View Tutorial Step 1 waveforms"
-	@echo "  wave-tutorial-step2  View Tutorial Step 2 waveforms"
-	@echo "  wave-tutorial-step3  View Tutorial Step 3 waveforms"
-	@echo "  wave-tutorial-step4  View Tutorial Step 4 waveforms"
 	@echo ""
 	@echo "$(GREEN)PROGRAMMING TARGETS:$(NC)"
 	@echo "  prog-hello-world     Program Hello World to Tang Nano"
 	@echo "  prog-6502-computer   Program 6502 Computer to Tang Nano"
-	@echo "  prog-tutorial-step1  Program Tutorial Step 1 to Tang Nano"
-	@echo "  prog-tutorial-step2  Program Tutorial Step 2 to Tang Nano"
-	@echo "  prog-tutorial-step3  Program Tutorial Step 3 to Tang Nano"
-	@echo "  prog-tutorial-step4  Program Tutorial Step 4 to Tang Nano"
 	@echo ""
 	@echo "$(GREEN)UTILITY TARGETS:$(NC)"
 	@echo "  clean                Clean build directory"
 	@echo "  clean-hello-world    Clean Hello World build files"
 	@echo "  clean-6502-computer  Clean 6502 Computer build files"
-	@echo "  clean-tutorial-step1 Clean Tutorial Step 1 build files"
-	@echo "  clean-tutorial-step2 Clean Tutorial Step 2 build files"
-	@echo "  clean-tutorial-step3 Clean Tutorial Step 3 build files"
-	@echo "  clean-tutorial-step4 Clean Tutorial Step 4 build files"
 	@echo "  list-projects        List all available projects"
 	@echo "  list-boards          List supported boards"
 	@echo "  help                 Show this help"
@@ -388,8 +255,8 @@ help:
 	@echo "$(GREEN)EXAMPLES:$(NC)"
 	@echo "  make hello-world                # Build for Tang Nano 9K"
 	@echo "  make hello-world BOARD=20k      # Build for Tang Nano 20K"
-	@echo "  make sim-tutorial-step1         # Simulate tutorial step 1"
-	@echo "  make wave-tutorial-step1        # View tutorial step 1 waveforms"
+	@echo "  make sim-6502-computer          # Simulate 6502 computer"
+	@echo "  make wave-6502-computer         # View 6502 computer waveforms"
 	@echo "  make prog-hello-world           # Program hello-world to FPGA"
 	@echo ""
 	@echo "$(BLUE)==============================================================================$(NC)"

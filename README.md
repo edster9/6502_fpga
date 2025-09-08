@@ -6,7 +6,6 @@ A complete 6502-based computer implementation for the Tang Nano FPGA development
 
 - ✅ **Working 6502 CPU**: Cycle-accurate Arlet Ottens implementation verified in simulation
 - ✅ **Complete Toolchain**: OSS CAD Suite with enhanced Makefile and auto-completion
-- ✅ **Educational Tutorials**: Boolean algebra and K-map derived digital logic examples  
 - ✅ **Professional Workflow**: Git integration, comprehensive testing, waveform analysis
 - 🔄 **Memory System**: RAM/ROM controllers and peripherals (next phase)
 
@@ -27,19 +26,7 @@ make wave-6502-computer
 ```
 ├── projects/              # Main project directories
 │   ├── hello-world/       # Basic LED Hello World project
-│   ├── 6502-computer/     # 6502 CPU Computer implementation
-│   └── tutorial/          # Step-by-step learning tutorials
-│       └── src/           # Tutorial source files
-│           ├── step1.v    # Basic LED toggle
-│           ├── step2.v    # RGB color cycling
-│           ├── step3.v    # PWM breathing effect
-│           └── step4.v    # Button debouncing
-├── testbench/             # All simulation testbenches
-│   ├── blinky_tb.v        # Blinky testbench (legacy)
-│   ├── tutorial_step1_tb.v # Tutorial Step 1 testbench
-│   ├── tutorial_step2_tb.v # Tutorial Step 2 testbench
-│   ├── tutorial_step3_tb.v # Tutorial Step 3 testbench
-│   └── tutorial_step4_tb.v # Tutorial Step 4 testbench
+│   └── 6502-computer/     # 6502 CPU Computer implementation
 ├── constraints/           # FPGA pin constraints for different boards
 │   ├── tangnano9k.cst     # Tang Nano 9K constraints
 │   └── tangnano20k.cst    # Tang Nano 20K constraints
@@ -106,30 +93,18 @@ make prog-hello-world
 |---------|-------------|---------------|
 | `make hello-world` | Build Hello World LED project | 9K, 20K |
 | `make 6502-computer` | Build 6502 Computer project | 9K, 20K |
-| `make tutorial-step1` | Build Tutorial Step 1 (LED toggle) | 9K, 20K |
-| `make tutorial-step2` | Build Tutorial Step 2 (RGB cycling) | 9K, 20K |
-| `make tutorial-step3` | Build Tutorial Step 3 (PWM breathing) | 9K, 20K |
-| `make tutorial-step4` | Build Tutorial Step 4 (Button debounce) | 9K, 20K |
 
 ### Simulation Commands
 | Command | Description |
 |---------|-------------|
 | `make sim-hello-world` | Simulate Hello World project |
 | `make sim-6502-computer` | Simulate 6502 Computer project |
-| `make sim-tutorial-step1` | Simulate Tutorial Step 1 |
-| `make sim-tutorial-step2` | Simulate Tutorial Step 2 |
-| `make sim-tutorial-step3` | Simulate Tutorial Step 3 |
-| `make sim-tutorial-step4` | Simulate Tutorial Step 4 |
 
 ### Waveform Viewing Commands
 | Command | Description |
 |---------|-------------|
 | `make wave-hello-world` | View Hello World waveforms in GTKWave |
 | `make wave-6502-computer` | View 6502 Computer waveforms in GTKWave |
-| `make wave-tutorial-step1` | View Tutorial Step 1 waveforms in GTKWave |
-| `make wave-tutorial-step2` | View Tutorial Step 2 waveforms in GTKWave |
-| `make wave-tutorial-step3` | View Tutorial Step 3 waveforms in GTKWave |
-| `make wave-tutorial-step4` | View Tutorial Step 4 waveforms in GTKWave |
 
 ### Programming Commands
 | Command | Description |
