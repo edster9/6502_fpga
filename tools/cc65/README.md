@@ -15,10 +15,10 @@ This directory contains the cc65 cross-compiler toolchain for 6502 development.
 
 ## Usage
 
-Assembly programs are built from `projects/6502_computer/asm/`:
+Assembly programs are built from `projects/6502-computer/asm/`:
 
 ```bash
-cd projects/6502_computer/asm
+cd projects/6502-computer/asm
 ./build.sh hello    # Builds hello.s into build/hello.bin
 ```
 

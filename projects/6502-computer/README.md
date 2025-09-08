@@ -5,7 +5,7 @@ This directory contains a complete 6502 computer implementation for FPGA.
 ## Directory Structure
 
 ```
-6502_computer/
+6502-computer/
 ├── src/           # Verilog HDL source files
 │   ├── top.v      # Top-level module (CPU + minimal memory)
 │   ├── cpu.v      # Arlet Ottens 6502 CPU core
@@ -24,16 +24,16 @@ From the project root directory:
 
 ```bash
 # Simulate the CPU
-make sim-6502_computer
+make sim-6502-computer
 
 # Build for Tang Nano 9K  
-make 6502_computer
+make 6502-computer
 
 # Program to FPGA
-make prog-6502_computer
+make prog-6502-computer
 
 # View simulation waveforms
-make wave-6502_computer
+make wave-6502-computer
 ```
 
 ## Assembly Programming
@@ -46,7 +46,7 @@ The `asm/` directory contains 6502 assembly programs that can run on the CPU.
 
 ### Building Assembly Programs
 ```bash
-cd projects/6502_computer/asm
+cd projects/6502-computer/asm
 ./build.sh hello
 ```
 

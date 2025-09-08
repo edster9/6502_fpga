@@ -6,12 +6,12 @@ This workspace contains multiple FPGA projects for learning and development on t
 
 ```
 projects/
-├── hello_world/        # Simple LED counter for learning Verilog
+├── hello-world/        # Simple LED counter for learning Verilog
 │   ├── src/
-│   │   └── hello_world.v
+│   │   └── hello-world.v
 │   └── testbench/
-│       └── hello_world_tb.v
-└── 6502_computer/      # Advanced 6502 computer system
+│       └── hello-world_tb.v
+└── 6502-computer/      # Advanced 6502 computer system
     ├── src/
     │   ├── top.v           # System top-level
     │   ├── cpu/
@@ -24,14 +24,14 @@ projects/
 ## Getting Started
 
 ### 1. Learn with Hello World
-Start with the `hello_world` project to learn Verilog basics:
+Start with the `hello-world` project to learn Verilog basics:
 - Simple 24-bit counter
 - Controls RGB LED on Tang Nano
 - Extensively commented for learning
 - Quick build and simulation
 
 ### 2. Progress to 6502 Computer
-Move to the `6502_computer` project for advanced topics:
+Move to the `6502-computer` project for advanced topics:
 - Complete 6502 CPU implementation
 - Memory controller with RAM/ROM
 - External PSRAM interface
@@ -42,19 +42,19 @@ Move to the `6502_computer` project for advanced topics:
 ### Using Make
 ```bash
 # Build Hello World project
-make hello_world
+make hello-world
 
 # Simulate Hello World
-make sim-hello_world
+make sim-hello-world
 
 # Build 6502 Computer
-make 6502_computer
+make 6502-computer
 
 # Program the FPGA
-make prog-hello_world
+make prog-hello-world
 
 # Build for Tang Nano 20K
-make hello_world BOARD=20k
+make hello-world BOARD=20k
 ```
 
 ### Using VS Code Tasks
@@ -66,14 +66,14 @@ Open Command Palette (Ctrl+Shift+P) and run:
 
 ## Learning Path
 
-1. **Start Here**: `projects/hello_world/`
+1. **Start Here**: `projects/hello-world/`
    - Read the extensively commented Verilog code
    - Build and simulate the project
    - Program it to your Tang Nano
    - Watch the LEDs blink at different rates
 
 2. **Understanding Simulation**:
-   - Run simulation and check `build/hello_world.vcd`
+   - Run simulation and check `build/hello-world.vcd`
    - Open VCD files with GTKWave to see waveforms
    - Understand the testbench structure
 

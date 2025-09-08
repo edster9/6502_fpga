@@ -35,15 +35,15 @@
 ### Build & Program
 ```bash
 # Build examples
-make hello_world
-make 6502_computer  
+make hello-world
+make 6502-computer  
 
 # Simulate designs
-make sim-hello_world
-make sim-6502_computer
+make sim-hello-world
+make sim-6502-computer
 
 # Program Tang Nano (when you get your board)
-make prog-hello_world
+make prog-hello-world
 
 # Clean build files
 make clean
@@ -65,7 +65,7 @@ make clean
 ### 2. **When Tang Nano Arrives**
 ```bash
 # Program the working 6502 computer
-make prog-6502_computer
+make prog-6502-computer
 # Your 6502 computer will be running on FPGA!
 ```
 

@@ -27,7 +27,7 @@ module hello_world_tb();
     // Main simulation control
     initial begin
         // Save waveform data for viewing
-        $dumpfile("build/hello_world.vcd");
+        $dumpfile("build/hello-world.vcd");
         $dumpvars(0, hello_world_tb);
         
         // Print header

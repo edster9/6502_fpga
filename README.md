@@ -14,10 +14,10 @@ A complete 6502-based computer implementation for the Tang Nano FPGA development
 
 ```bash
 # Test the 6502 CPU core
-make sim-6502_computer
+make sim-6502-computer
 
 # View CPU execution in GTKWave
-make wave-6502_computer
+make wave-6502-computer
 ```
 
 **Expected Result**: CPU executes LDA/LDX/LDY/STA/JMP instructions correctly, with memory write confirmation.
@@ -26,8 +26,8 @@ make wave-6502_computer
 
 ```
 ├── projects/              # Main project directories
-│   ├── hello_world/       # Basic LED Hello World project
-│   ├── 6502_computer/     # 6502 CPU Computer implementation
+│   ├── hello-world/       # Basic LED Hello World project
+│   ├── 6502-computer/     # 6502 CPU Computer implementation
 │   └── tutorial/          # Step-by-step learning tutorials
 │       └── src/           # Tutorial source files
 │           ├── step1.v    # Basic LED toggle
@@ -75,10 +75,10 @@ make wave-6502_computer
 ### 2. Build Your First Project
 ```bash
 # Build Hello World for Tang Nano 9K
-make hello_world
+make hello-world
 
 # Build Hello World for Tang Nano 20K  
-make hello_world BOARD=20k
+make hello-world BOARD=20k
 
 # Build and view all available commands
 make help
@@ -87,16 +87,16 @@ make help
 ### 3. Simulate and Debug
 ```bash
 # Run simulation
-make sim-hello_world
+make sim-hello-world
 
 # View waveforms in GTKWave
-make wave-hello_world
+make wave-hello-world
 ```
 
 ### 4. Program the FPGA
 ```bash
 # Program the Tang Nano
-make prog-hello_world
+make prog-hello-world
 ```
 
 ## Complete Command Reference
@@ -104,8 +104,8 @@ make prog-hello_world
 ### Build Commands
 | Command | Description | Board Support |
 |---------|-------------|---------------|
-| `make hello_world` | Build Hello World LED project | 9K, 20K |
-| `make 6502_computer` | Build 6502 Computer project | 9K, 20K |
+| `make hello-world` | Build Hello World LED project | 9K, 20K |
+| `make 6502-computer` | Build 6502 Computer project | 9K, 20K |
 | `make tutorial-step1` | Build Tutorial Step 1 (LED toggle) | 9K, 20K |
 | `make tutorial-step2` | Build Tutorial Step 2 (RGB cycling) | 9K, 20K |
 | `make tutorial-step3` | Build Tutorial Step 3 (PWM breathing) | 9K, 20K |
@@ -114,8 +114,8 @@ make prog-hello_world
 ### Simulation Commands
 | Command | Description |
 |---------|-------------|
-| `make sim-hello_world` | Simulate Hello World project |
-| `make sim-6502_computer` | Simulate 6502 Computer project |
+| `make sim-hello-world` | Simulate Hello World project |
+| `make sim-6502-computer` | Simulate 6502 Computer project |
 | `make sim-tutorial-step1` | Simulate Tutorial Step 1 |
 | `make sim-tutorial-step2` | Simulate Tutorial Step 2 |
 | `make sim-tutorial-step3` | Simulate Tutorial Step 3 |
@@ -124,8 +124,8 @@ make prog-hello_world
 ### Waveform Viewing Commands
 | Command | Description |
 |---------|-------------|
-| `make wave-hello_world` | View Hello World waveforms in GTKWave |
-| `make wave-6502_computer` | View 6502 Computer waveforms in GTKWave |
+| `make wave-hello-world` | View Hello World waveforms in GTKWave |
+| `make wave-6502-computer` | View 6502 Computer waveforms in GTKWave |
 | `make wave-tutorial-step1` | View Tutorial Step 1 waveforms in GTKWave |
 | `make wave-tutorial-step2` | View Tutorial Step 2 waveforms in GTKWave |
 | `make wave-tutorial-step3` | View Tutorial Step 3 waveforms in GTKWave |
@@ -134,8 +134,8 @@ make prog-hello_world
 ### Programming Commands
 | Command | Description |
 |---------|-------------|
-| `make prog-hello_world` | Program Hello World to Tang Nano |
-| `make prog-6502_computer` | Program 6502 Computer to Tang Nano |
+| `make prog-hello-world` | Program Hello World to Tang Nano |
+| `make prog-6502-computer` | Program 6502 Computer to Tang Nano |
 | `make prog-tutorial-step1` | Program Tutorial Step 1 to Tang Nano |
 | `make prog-tutorial-step2` | Program Tutorial Step 2 to Tang Nano |
 | `make prog-tutorial-step3` | Program Tutorial Step 3 to Tang Nano |
@@ -146,8 +146,8 @@ make prog-hello_world
 | Command | Description |
 |---------|-------------|
 | `make clean` | Clean all build files |
-| `make clean-hello_world` | Clean Hello World build files |
-| `make clean-6502_computer` | Clean 6502 Computer build files |
+| `make clean-hello-world` | Clean Hello World build files |
+| `make clean-6502-computer` | Clean 6502 Computer build files |
 | `make clean-tutorial-step1` | Clean Tutorial Step 1 build files |
 | `make clean-tutorial-step2` | Clean Tutorial Step 2 build files |
 | `make clean-tutorial-step3` | Clean Tutorial Step 3 build files |
@@ -159,18 +159,18 @@ make prog-hello_world
 ### Board Selection Examples
 ```bash
 # Build for Tang Nano 9K (default)
-make hello_world
+make hello-world
 
 # Build for Tang Nano 20K
-make hello_world BOARD=20k
+make hello-world BOARD=20k
 
 # Simulate and view waveforms (board-independent)
-make sim-hello_world
-make wave-hello_world
+make sim-hello-world
+make wave-hello-world
 
 # Program specific board builds
-make prog-hello_world        # Programs 9K build
-make prog-hello_world BOARD=20k  # Programs 20K build
+make prog-hello-world        # Programs 9K build
+make prog-hello-world BOARD=20k  # Programs 20K build
 ```
 
 ### Clean Commands Examples
@@ -179,12 +179,12 @@ make prog-hello_world BOARD=20k  # Programs 20K build
 make clean
 
 # Clean specific project build files
-make clean-hello_world
-make clean-6502_computer
+make clean-hello-world
+make clean-6502-computer
 make clean-tutorial-step1
 
 # Clean before fresh build
-make clean && make hello_world
+make clean && make hello-world
 ```
 
 ## Development Workflow
