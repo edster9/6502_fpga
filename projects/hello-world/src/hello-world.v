@@ -1,5 +1,5 @@
 // Hello World Verilog Project
-// A simple LED counter to learn Verilog basics
+// A simple LED blinker to learn Verilog basics
 
 module hello_world (
     input wire clk,          // 27MHz clock from Tang Nano 9K/20K
@@ -38,6 +38,11 @@ module hello_world (
     5. ASSIGN: Continuous assignment (always active, like gates)
     
     Math: 27MHz clock, counter[21] = 27MHz / 2^21 = ~12.9Hz / 10 = ~1.3Hz blink
+    
+    This is your first FPGA program! The LEDs will blink at different rates:
+    - Red: Slowest (~1.3Hz)
+    - Green: Medium (~2.6Hz) 
+    - Blue: Fastest (~5.1Hz)
     */
 
 endmodule

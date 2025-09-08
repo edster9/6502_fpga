@@ -103,7 +103,7 @@ $(BUILD_DIR)/hello-world.json: $(PROJECTS_DIR)/hello-world/src/hello-world.v | $
 
 $(BUILD_DIR)/hello-world_pnr.json: $(BUILD_DIR)/hello-world.json
 	@echo "$(BLUE)Place & Route for hello-world...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,hello-world,$(BOARD))
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,hello-world,$(BOARD)) --top hello_world
 
 $(BUILD_DIR)/hello-world.fs: $(BUILD_DIR)/hello-world_pnr.json
 	@echo "$(BLUE)Generating bitstream for hello-world...$(NC)"
@@ -194,6 +194,23 @@ $(BUILD_DIR)/simple-cpu.fs: $(BUILD_DIR)/simple-cpu_pnr.json
 	@echo "$(BLUE)Generating bitstream for simple-cpu...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
+# Debug UART Project
+.PHONY: debug-uart
+debug-uart: $(BUILD_DIR)/debug-uart.fs
+	@echo "$(GREEN)[OK] Debug UART project built successfully for Tang Nano $(BOARD)$(NC)"
+
+$(BUILD_DIR)/debug-uart.json: $(PROJECTS_DIR)/debug-uart/src/debug-uart.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing debug-uart...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/debug-uart_pnr.json: $(BUILD_DIR)/debug-uart.json
+	@echo "$(BLUE)Place & Route for debug-uart...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,debug-uart,$(BOARD)) --top debug_uart
+
+$(BUILD_DIR)/debug-uart.fs: $(BUILD_DIR)/debug-uart_pnr.json
+	@echo "$(BLUE)Generating bitstream for debug-uart...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
 # ==============================================================================
 # SIMULATION TARGETS  
 # ==============================================================================
@@ -218,6 +235,9 @@ sim-keyboard: $(BUILD_DIR)/keyboard.vcd
 
 sim-simple-cpu: $(BUILD_DIR)/simple-cpu.vcd
 	@echo "$(GREEN)[OK] Simple CPU simulation completed$(NC)"
+
+sim-debug-uart: $(BUILD_DIR)/debug-uart.vcd
+	@echo "$(GREEN)[OK] Debug UART simulation completed$(NC)"
 
 # Simulation build rules
 $(BUILD_DIR)/hello-world_sim: $(PROJECTS_DIR)/hello-world/testbench/hello-world_tb.v $(PROJECTS_DIR)/hello-world/src/hello-world.v | $(BUILD_DIR)
@@ -244,6 +264,10 @@ $(BUILD_DIR)/simple-cpu_sim: $(PROJECTS_DIR)/simple-cpu/testbench/simple-cpu_tb.
 	@echo "$(BLUE)Compiling simple-cpu simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
+$(BUILD_DIR)/debug-uart_sim: $(PROJECTS_DIR)/debug-uart/testbench/debug-uart_tb.v $(PROJECTS_DIR)/debug-uart/src/debug-uart.v | $(BUILD_DIR)
+	@echo "$(BLUE)Compiling debug-uart simulation...$(NC)"
+	$(ENV_SETUP) iverilog -o $@ $^
+
 # VCD generation rules
 $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 	@echo "$(BLUE)Running simulation for $*...$(NC)"
@@ -253,7 +277,7 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 # GTKWAVE TARGETS
 # ==============================================================================
 
-.PHONY: wave-hello-world wave-6502-computer wave-video wave-sound wave-keyboard wave-simple-cpu
+.PHONY: wave-hello-world wave-6502-computer wave-video wave-sound wave-keyboard wave-simple-cpu wave-debug-uart
 
 wave-hello-world: $(BUILD_DIR)/hello-world.vcd
 	@echo "$(BLUE)Opening GTKWave for hello-world...$(NC)"
@@ -279,11 +303,15 @@ wave-simple-cpu: $(BUILD_DIR)/simple-cpu.vcd
 	@echo "$(BLUE)Opening GTKWave for simple-cpu...$(NC)"
 	$(ENV_SETUP) gtkwave $<
 
+wave-debug-uart: $(BUILD_DIR)/debug-uart.vcd
+	@echo "$(BLUE)Opening GTKWave for debug-uart...$(NC)"
+	$(ENV_SETUP) gtkwave $<
+
 # ==============================================================================
 # PROGRAMMING TARGETS
 # ==============================================================================
 
-.PHONY: prog-hello-world prog-6502-computer prog-video prog-sound prog-keyboard prog-simple-cpu
+.PHONY: prog-hello-world prog-6502-computer prog-video prog-sound prog-keyboard prog-simple-cpu prog-debug-uart
 
 prog-hello-world: $(BUILD_DIR)/hello-world.fs
 	@echo "$(BLUE)Programming hello-world to Tang Nano...$(NC)"
@@ -314,6 +342,11 @@ prog-simple-cpu: $(BUILD_DIR)/simple-cpu.fs
 	@echo "$(BLUE)Programming simple-cpu to Tang Nano...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] simple-cpu programmed successfully$(NC)"
+
+prog-debug-uart: $(BUILD_DIR)/debug-uart.fs
+	@echo "$(BLUE)Programming debug-uart to Tang Nano...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] debug-uart programmed successfully$(NC)"
 
 # ==============================================================================
 # UTILITY TARGETS
@@ -357,9 +390,15 @@ clean-simple-cpu:
 	$(ENV_SETUP) $(call CLEAN_PROJECT,simple-cpu)
 	@echo "$(GREEN)[OK] Simple CPU build files cleaned$(NC)"
 
+clean-debug-uart:
+	@echo "$(YELLOW)Cleaning Debug UART build files...$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,debug-uart)
+	@echo "$(GREEN)[OK] Debug UART build files cleaned$(NC)"
+
 list-projects:
 	@echo "$(BLUE)Available Projects:$(NC)"
 	@echo "  hello-world     - Basic LED Hello World"
+	@echo "  debug-uart      - UART Debug Output for Learning"
 	@echo "  6502-computer   - 6502 CPU Computer"
 	@echo "  video           - Video Generation Module"
 	@echo "  sound           - Sound Generation Module"
@@ -384,6 +423,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)BUILD TARGETS:$(NC)"
 	@echo "  hello-world          Build Hello World project"
+	@echo "  debug-uart           Build Debug UART project"
 	@echo "  6502-computer        Build 6502 Computer project"
 	@echo "  video                Build Video project"
 	@echo "  sound                Build Sound project"
@@ -392,6 +432,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)SIMULATION TARGETS:$(NC)"
 	@echo "  sim-hello-world      Simulate Hello World"
+	@echo "  sim-debug-uart       Simulate Debug UART"
 	@echo "  sim-6502-computer    Simulate 6502 Computer"
 	@echo "  sim-video            Simulate Video"
 	@echo "  sim-sound            Simulate Sound"
@@ -400,6 +441,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)GTKWAVE TARGETS:$(NC)"
 	@echo "  wave-hello-world     View Hello World waveforms"
+	@echo "  wave-debug-uart      View Debug UART waveforms"
 	@echo "  wave-6502-computer   View 6502 Computer waveforms"
 	@echo "  wave-video           View Video waveforms"
 	@echo "  wave-sound           View Sound waveforms"
@@ -408,6 +450,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)PROGRAMMING TARGETS:$(NC)"
 	@echo "  prog-hello-world     Program Hello World to Tang Nano"
+	@echo "  prog-debug-uart      Program Debug UART to Tang Nano"
 	@echo "  prog-6502-computer   Program 6502 Computer to Tang Nano"
 	@echo "  prog-video           Program Video to Tang Nano"
 	@echo "  prog-sound           Program Sound to Tang Nano"
@@ -417,6 +460,7 @@ help:
 	@echo "$(GREEN)UTILITY TARGETS:$(NC)"
 	@echo "  clean                Clean build directory"
 	@echo "  clean-hello-world    Clean Hello World build files"
+	@echo "  clean-debug-uart     Clean Debug UART build files"
 	@echo "  clean-6502-computer  Clean 6502 Computer build files"
 	@echo "  clean-video          Clean Video build files"
 	@echo "  clean-sound          Clean Sound build files"
