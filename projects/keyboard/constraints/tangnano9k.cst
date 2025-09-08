@@ -1,0 +1,20 @@
+# Keyboard Project - Tang Nano 9K Constraints
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Reset input
+IO_LOC  "reset" 3;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for keyboard interface:
+# PS/2 clock and data, USB interface, etc.
+# Will be added as the project develops
+
+# Example placeholders for future keyboard interface:
+# IO_LOC "ps2_clk" 25;
+# IO_LOC "ps2_data" 26;
+# IO_PORT "ps2_clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+# IO_PORT "ps2_data" IO_TYPE=LVCMOS33 PULL_MODE=UP;

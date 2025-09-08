@@ -1,0 +1,21 @@
+# Video Project - Tang Nano 20K Constraints  
+# Pin assignments for Gowin GW2A-LV18PG256C8/I7
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 4;
+IO_PORT "clk" IO_TYPE=LVCMOS33;
+
+# Reset input
+IO_LOC  "reset" 88;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for video output:
+# VGA/LCD interface, pixel clock, sync signals, etc.
+# Will be added as the project develops
+
+# Example placeholders for future video interface:
+# IO_LOC "video_r[0]" 69;
+# IO_LOC "video_g[0]" 70;
+# IO_LOC "video_b[0]" 71;
+# IO_LOC "video_hsync" 72;
+# IO_LOC "video_vsync" 73;

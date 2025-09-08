@@ -1,0 +1,21 @@
+# Simple CPU Project - Tang Nano 20K Constraints
+# Pin assignments for Gowin GW2A-LV18PG256C8/I7
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 4;
+IO_PORT "clk" IO_TYPE=LVCMOS33;
+
+# Reset input
+IO_LOC  "reset" 88;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for CPU interface:
+# Memory bus, I/O ports, debug pins, etc.
+# Will be added as the project develops
+
+# Example placeholders for future CPU interface:
+# IO_LOC "mem_addr[0]" 69;
+# IO_LOC "mem_data[0]" 70;
+# IO_LOC "mem_read" 71;
+# IO_LOC "mem_write" 72;
+# IO_LOC "cpu_halt" 73;
