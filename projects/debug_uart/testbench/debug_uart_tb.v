@@ -78,7 +78,7 @@ module debug_uart_tb;
     // Test sequence
     initial begin
         // Save waveform data for viewing
-        $dumpfile("build/debug-uart.vcd");
+        $dumpfile("build/debug_uart.vcd");
         $dumpvars(0, debug_uart_tb);
         
         // Print header
@@ -92,7 +92,7 @@ module debug_uart_tb;
         
         $display("");
         $display("=== Simulation Complete! ===");
-        $display("Check build/debug-uart.vcd with GTKWave to see waveforms");
+        $display("Check build/debug_uart.vcd with GTKWave to see waveforms");
         $finish;
     end
     
