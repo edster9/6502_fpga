@@ -1,0 +1,16 @@
+# 6502 Computer Project - Tang Nano 9K Constraints
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+
+# Clock input - 27MHz crystal 
+IO_LOC "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for 6502 computer system:
+# Memory interface, I/O ports, debug pins, etc.
+# Will be added as the project grows
+
+# Example placeholders for future memory interface:
+# IO_LOC "ram_addr[0]" 25;
+# IO_LOC "ram_data[0]" 26;
+# IO_LOC "ram_we_n" 27;
+# IO_LOC "ram_oe_n" 28;

@@ -25,18 +25,20 @@
 # Build directories
 BUILD_DIR := build
 PROJECTS_DIR := projects
-CONSTRAINTS_DIR := constraints
+
+# Function to get project-specific constraint file
+define PROJECT_CONSTRAINTS
+$(PROJECTS_DIR)/$(1)/constraints/tangnano$(2).cst
+endef
 
 # Board configuration (default: 9k, can override with BOARD=20k)
 BOARD ?= 9k
 ifeq ($(BOARD),20k)
     DEVICE := GW2A-LV18PG256C8/I7
     FAMILY := GW2A-18C
-    CONSTRAINTS := $(CONSTRAINTS_DIR)/tangnano20k.cst
 else
     DEVICE := GW1NR-LV9QN88PC6/I5
     FAMILY := GW1N-9C
-    CONSTRAINTS := $(CONSTRAINTS_DIR)/tangnano9k.cst
 endif
 
 # OSS CAD Suite setup - bash only
@@ -101,7 +103,7 @@ $(BUILD_DIR)/hello-world.json: $(PROJECTS_DIR)/hello-world/src/hello-world.v | $
 
 $(BUILD_DIR)/hello-world_pnr.json: $(BUILD_DIR)/hello-world.json
 	@echo "$(BLUE)Place & Route for hello-world...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,hello-world,$(BOARD))
 
 $(BUILD_DIR)/hello-world.fs: $(BUILD_DIR)/hello-world_pnr.json
 	@echo "$(BLUE)Generating bitstream for hello-world...$(NC)"
@@ -118,7 +120,7 @@ $(BUILD_DIR)/6502-computer.json: $(PROJECTS_DIR)/6502-computer/src/top.v $(PROJE
 
 $(BUILD_DIR)/6502-computer_pnr.json: $(BUILD_DIR)/6502-computer.json
 	@echo "$(BLUE)Place & Route for 6502-computer...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS_DIR)/tangnano9k.cst
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,6502-computer,$(BOARD))
 
 $(BUILD_DIR)/6502-computer.fs: $(BUILD_DIR)/6502-computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502-computer...$(NC)"
