@@ -29,31 +29,16 @@ modelsim.ini
 *.wdb
 *.ghw
 
-# Tool-specific directories and executables
-tools/oss-cad-suite/bin/
-tools/oss-cad-suite/lib/
-tools/oss-cad-suite/share/
-tools/oss-cad-suite/include/
-tools/oss-cad-suite/examples/
-tools/oss-cad-suite/etc/
-tools/oss-cad-suite/license/
+# Tool-specific directories - ignore all files but allow specific exceptions
+tools/oss-cad-suite/*
+tools/cc65/*
 
-# cc65 toolchain - exclude binaries and large directories but keep cfg files
-tools/cc65/bin/
-tools/cc65/lib/
-tools/cc65/include/
-tools/cc65/include/**
-tools/cc65/asminc/
-tools/cc65/html/
-tools/cc65/samples/
-tools/cc65/target/
-tools/cc65/cc65.zip
-
-# Keep only the environment scripts and documentation
-# tools/oss-cad-suite/environment*
-# tools/oss-cad-suite/README
-# tools/oss-cad-suite/VERSION
-# tools/oss-cad-suite/*.bat
+# Allow specific files that are useful to track
+!tools/oss-cad-suite/README
+!tools/oss-cad-suite/VERSION  
+!tools/oss-cad-suite/environment.bat
+!tools/oss-cad-suite/environment.ps1
+!tools/oss-cad-suite/start.bat
 
 # Operating system files
 .DS_Store
