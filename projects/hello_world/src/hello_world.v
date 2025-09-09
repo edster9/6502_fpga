@@ -11,8 +11,8 @@ module hello_world (
     // This is a simple binary counter
     // Each LED represents a bit of the counter
     
-    // Counter register - 24 bits is enough for visible blinking
-    reg [23:0] counter;
+    // Counter register - 27 bits for much slower blinking
+    reg [26:0] counter;
     
     // This is the main logic block
     // It runs on every rising edge of the clock
@@ -20,11 +20,11 @@ module hello_world (
         counter <= counter + 1;  // Increment counter every clock cycle
     end
     
-    // Connect LEDs to different counter bits
+    // Connect LEDs to different counter bits for much slower blinking
     // Higher bits change slower, so we get different blink rates
-    assign led_r = counter[21];    // Bit 21: slowest blink (~1.3Hz at 27MHz)
-    assign led_g = counter[20];    // Bit 20: medium blink (~2.6Hz at 27MHz)  
-    assign led_b = counter[19];    // Bit 19: fastest blink (~5.1Hz at 27MHz)
+    assign led_r = counter[26];    // Bit 26: ~0.2Hz (5 second period)
+    assign led_g = counter[25];    // Bit 25: ~0.4Hz (2.5 second period)  
+    assign led_b = counter[24];    // Bit 24: ~0.8Hz (1.25 second period)
     
     /* 
     Learning Notes:
@@ -37,12 +37,12 @@ module hello_world (
     4. ALWAYS BLOCKS: Code that runs when something happens (@posedge clk = on clock edge)
     5. ASSIGN: Continuous assignment (always active, like gates)
     
-    Math: 27MHz clock, counter[21] = 27MHz / 2^21 = ~12.9Hz / 10 = ~1.3Hz blink
+    Math: 27MHz clock, counter[26] = 27MHz / 2^26 = 27MHz / 67M = ~0.2Hz blink
     
     This is your first FPGA program! The LEDs will blink at different rates:
-    - Red: Slowest (~1.3Hz)
-    - Green: Medium (~2.6Hz) 
-    - Blue: Fastest (~5.1Hz)
+    - Red: Slowest (~0.2Hz - 5 second period) 
+    - Green: Medium (~0.4Hz - 2.5 second period) 
+    - Blue: Fastest (~0.8Hz - 1.25 second period)
     */
 
 endmodule

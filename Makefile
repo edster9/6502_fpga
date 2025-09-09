@@ -34,7 +34,7 @@ endef
 # Board configuration (default: 9k, can override with BOARD=20k)
 BOARD ?= 9k
 ifeq ($(BOARD),20k)
-    DEVICE := GW2A-LV18PG256C8/I7
+    DEVICE := GW2A-LV18QN88C8/I7
     FAMILY := GW2A-18C
 else
     DEVICE := GW1NR-LV9QN88PC6/I5

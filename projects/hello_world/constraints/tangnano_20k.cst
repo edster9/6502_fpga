@@ -1,14 +1,14 @@
 # Hello World Project - Tang Nano 20K Constraints  
-# Pin assignments for Gowin GW2A-LV18PG256C8/I7 (PG256 package)
+# Pin assignments for Gowin GW2A-LV18QN88C8/I7 (QN88 package)
 
 # Clock input - 27MHz crystal
-IO_LOC "clk" H11;
+IO_LOC "clk" 4;
 IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 # RGB LED outputs (built-in LEDs)
-IO_LOC "led_r" A13;
-IO_LOC "led_g" A12; 
-IO_LOC "led_b" B12;
+IO_LOC "led_r" 18;
+IO_LOC "led_g" 17; 
+IO_LOC "led_b" 16;
 IO_PORT "led_r" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led_g" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led_b" IO_TYPE=LVCMOS33 DRIVE=8;
