@@ -29,16 +29,9 @@ modelsim.ini
 *.wdb
 *.ghw
 
-# Tool-specific directories - ignore all files but allow specific exceptions
+# Tool-specific directories - ignore all files
 tools/oss-cad-suite/*
 tools/cc65/*
-
-# Allow specific files that are useful to track
-!tools/oss-cad-suite/README
-!tools/oss-cad-suite/VERSION  
-!tools/oss-cad-suite/environment.bat
-!tools/oss-cad-suite/environment.ps1
-!tools/oss-cad-suite/start.bat
 
 # Operating system files
 .DS_Store
