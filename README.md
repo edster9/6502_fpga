@@ -109,6 +109,7 @@ make prog_hello_world
 |---------|-------------|
 | `make wave_hello_world` | View Hello World waveforms in GTKWave |
 | `make wave_debug_uart` | View Debug UART waveforms in GTKWave |
+| `make wave_uart` | View UART waveforms in GTKWave |
 | `make wave_6502_computer` | View 6502 Computer waveforms in GTKWave |
 | `make wave_simple_cpu` | View Simple CPU waveforms in GTKWave |
 
@@ -131,6 +132,9 @@ make prog_hello_world
 | `make help` | Show comprehensive help |
 | `make list-projects` | List all available projects |
 | `make list-boards` | List supported boards |
+| `make list-devices` | List connected FPGA devices |
+| `make list-supported` | List all supported FPGA devices |
+| `make list-gowin` | List supported Gowin/Tang devices |
 
 ### Board Selection Examples
 ```bash

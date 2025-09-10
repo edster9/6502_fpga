@@ -1,181 +1,355 @@
-# 🔍 Hello World with UART Debug - Learning Guide
+# � UART Button Messaging Project - Interactive FPGA Learning
 
-## 🎯 What You'll Learn
+## 🎯 What This Project Does
 
-This enhanced hello-world project teaches you:
-1. **Basic FPGA Design** - LED blinking with counters
-2. **UART Communication** - Real-time debug output to your computer
-3. **Hardware Debugging** - See what's happening inside your FPGA
-4. **Module Integration** - How to connect multiple Verilog modules
+This UART project demonstrates **interactive FPGA communication** using button-controlled messaging. Unlike automatic blinking LEDs, this project responds to **your input** in real-time!
+
+**Key Features:**
+- 🔴 **Button 1**: Press to send "button1" message via UART + lights red LED
+- 🟢 **Button 2**: Press to send "button2" message via UART + lights green LED  
+- 📱 **Real-time feedback**: See messages instantly in your terminal
+- 🎓 **Learning platform**: Perfect for understanding FPGA-PC communication
 
 ## 🔌 Hardware Setup
 
-### You'll Need:
-- **Tang Nano 9K/20K** FPGA board
-- **USB-to-Serial Adapter** (FTDI, CH340, CP2102, etc.)
-- **Jumper wires**
-- **Terminal software** (PuTTY, Arduino Serial Monitor, screen, minicom)
+### What You'll Need:
+- **Tang Nano 9K or 20K** FPGA board
+- **USB cable** (connects to PC for power + UART communication)
+- **Terminal software** (PuTTY, Tera Term, Arduino Serial Monitor, etc.)
 
-### Wiring Connections:
+### Physical Connections:
 ```
-Tang Nano 9K Pin 17 (UART TX) → USB-Serial RX
-USB-Serial GND → Tang Nano GND
+Tang Nano 20K:
+- Button 1: Pin 88 (SW1 onboard button)
+- Button 2: Pin 87 (SW2 onboard button) 
+- Red LED: Pin 15 (built-in RGB LED)
+- Green LED: Pin 19 (built-in RGB LED)
+- UART TX: Pin 69 (built-in USB-Serial converter)
+
+Tang Nano 9K:
+- Button 1: Pin 3 (SW1 onboard button)
+- Button 2: Pin 4 (SW2 onboard button)
+- Red LED: Pin 18 (built-in RGB LED)
+- Green LED: Pin 17 (built-in RGB LED)  
+- UART TX: Pin 69 (built-in USB-Serial converter)
 ```
 
-**⚠️ Important**: Only connect TX→RX and GND. Don't connect the 3.3V/5V lines unless you know your adapter's voltage levels!
+**✅ Advantage**: Uses built-in USB-Serial converter - no external wiring needed!
 
 ## 📱 Software Setup
 
-### Option 1: PuTTY (Windows)
-1. Download PuTTY from putty.org
-2. Set Connection Type: `Serial`
-3. Set Serial Line: `COM3` (check Device Manager for your port)
-4. Set Speed: `115200`
-5. Click "Open"
+### Step 1: Find Your COM Port
+**Windows:**
+1. Open Device Manager
+2. Expand "Ports (COM & LPT)"
+3. Look for "USB-Enhanced-SERIAL CH340" or similar
+4. Note the COM port number (e.g., COM3)
 
-### Option 2: Arduino IDE Serial Monitor
-1. Open Arduino IDE
-2. Go to Tools → Serial Monitor
-3. Set baud rate to `115200`
-4. Select your COM port
-
-### Option 3: Terminal (Linux/Mac)
+**Linux/Mac:**
 ```bash
-# Find your device (usually /dev/ttyUSB0 or /dev/ttyACM0)
+# List available serial ports
 ls /dev/tty*
+# Look for /dev/ttyUSB0, /dev/ttyACM0, or similar
+```
 
-# Connect with screen
+### Step 2: Configure Terminal Software
+
+#### Option A: PuTTY (Windows - Recommended)
+1. Download from [putty.org](https://putty.org)
+2. **Connection Type**: Serial
+3. **Serial Line**: COM3 (your COM port)
+4. **Speed**: 115200
+5. **Data bits**: 8, **Stop bits**: 1, **Parity**: None
+6. Click "Open"
+
+#### Option B: Tera Term (Windows Alternative)
+1. Download Tera Term
+2. File → New Connection → Serial
+3. **Port**: COM3, **Baud rate**: 115200
+4. Setup → Serial Port: 8-N-1
+
+#### Option C: Arduino IDE Serial Monitor
+1. Open Arduino IDE
+2. Tools → Serial Monitor  
+3. **Baud rate**: 115200
+4. **Port**: Select your COM port
+
+#### Option D: Linux/Mac Terminal
+```bash
+# Using screen
 screen /dev/ttyUSB0 115200
 
-# Or with minicom
+# Using minicom  
 minicom -D /dev/ttyUSB0 -b 115200
+
+# Using picocom
+picocom -b 115200 /dev/ttyUSB0
 ```
 
 ## 🚀 Running the Project
 
 ### 1. Build and Program
 ```bash
-# Build the project
-make hello-world
+# Build for Tang Nano 20K (default)
+make uart
 
-# Program to Tang Nano
-make prog-hello-world
+# Or for Tang Nano 9K
+make uart BOARD=9k
+
+# Program to FPGA
+make prog-uart
 ```
 
-### 2. Watch the Debug Output
-You should see messages like this every ~5 seconds:
+### 2. Open Your Terminal
+1. Launch your terminal software (PuTTY recommended)
+2. Connect to the correct COM port at 115200 baud
+3. You should see a blank terminal - this is normal!
+
+### 3. Test the Buttons!
+- **Press Button 1 (SW1)**: 
+  - ✅ Red LED lights up while pressed
+  - ✅ Terminal shows: `button1`
+- **Press Button 2 (SW2)**:
+  - ✅ Green LED lights up while pressed  
+  - ✅ Terminal shows: `button2`
+
+**Expected Terminal Output:**
 ```
-Hello! Counter: 0x0001A4
-Hello! Counter: 0x0067B2
-Hello! Counter: 0x00CE89
-Hello! Counter: 0x013560
+button1
+button2
+button1
+button1
+button2
+button1
 ```
 
-### 3. Observe Both Outputs
-- **LEDs**: Red, Green, Blue blinking at different rates
-- **UART**: Counter values updating in your terminal
+## 🧠 Understanding the Code Architecture
 
-## 🧠 Understanding the Code
-
-### Counter Logic
+### Main Module: `uart.v`
 ```verilog
-reg [23:0] counter;        // Main LED counter
-reg [26:0] debug_counter;  // Debug message timing
+module uart (
+    input wire clk,          // 27MHz system clock
+    input wire btn1,         // Button 1 (active low)
+    input wire btn2,         // Button 2 (active low)
+    output wire led_r,       // Red LED
+    output wire led_g,       // Green LED  
+    output wire led_b,       // Blue LED (unused)
+    output wire uart_tx      // UART transmit
+);
+```
 
+### 1. Button Debouncing & Edge Detection
+```verilog
+reg [2:0] btn1_sync, btn2_sync;  // 3-stage synchronizer
+reg btn1_pressed, btn2_pressed;  // Edge detection
+
+// Synchronize and detect rising edge
 always @(posedge clk) begin
-    counter <= counter + 1;         // Increments every clock cycle
-    debug_counter <= debug_counter + 1;  // Controls debug timing
+    btn1_sync <= {btn1_sync[1:0], ~btn1};  // Shift register
+    btn1_pressed <= (btn1_sync[2:1] == 2'b01);  // Rising edge
 end
 ```
 
-### Debug Trigger
+**Why Debouncing?**
+- Mechanical buttons "bounce" causing multiple triggers
+- 3-stage synchronizer filters out noise
+- Edge detection ensures single message per press
+
+### 2. LED Control
 ```verilog
-wire debug_trigger = (debug_counter == 27'd0);  // True every ~5 seconds
+// LED follows button state (inverted for active-low LEDs)
+assign led_r = ~btn1_sync[2];  // Red on when btn1 pressed
+assign led_g = ~btn2_sync[2];  // Green on when btn2 pressed
 ```
 
-### UART Debug Module
-The `uart_debug_simple` module:
-1. Waits for `debug_trigger` edge
-2. Converts counter value to hex ASCII
-3. Sends "Hello! Counter: 0xXXXX\r\n" at 115200 baud
-4. Uses a state machine to send each character
-
-## 🔍 What to Experiment With
-
-### 1. Change Debug Frequency
+### 3. UART Debug Module
 ```verilog
-// Faster debug messages (every ~1 second)
-reg [24:0] debug_counter;  // Smaller counter = faster messages
-
-// Slower debug messages (every ~20 seconds)  
-reg [28:0] debug_counter;  // Larger counter = slower messages
+uart_debug debug_uart_inst (
+    .clk(clk),
+    .btn1_trigger(btn1_pressed),  // Triggers on button edge
+    .btn2_trigger(btn2_pressed),
+    .uart_tx(uart_tx)
+);
 ```
 
-### 2. Add More Debug Information
-Modify the debug message to include LED states:
-```verilog
-// In uart_debug_simple module, change the message array
-debug_message[0]  = "L";  debug_message[1]  = "E";  debug_message[2]  = "D";
-debug_message[3]  = ":";  debug_message[4]  = " ";  
-// Add logic to include led_r, led_g, led_b values
+### 4. UART State Machine
+The `uart_debug` module implements a **5-state finite state machine**:
+
+```
+IDLE → START → DATA → STOP → NEXT → (back to IDLE or START)
 ```
 
-### 3. Debug Different Counter Bits
+**State Details:**
+- **IDLE**: Wait for button press trigger
+- **START**: Send UART start bit (0)
+- **DATA**: Send 8 data bits (LSB first)
+- **STOP**: Send stop bit (1)
+- **NEXT**: Advance to next character or finish
+
+**Baud Rate Timing:**
 ```verilog
-// Send different parts of the counter
-.counter_value(counter[31:8])    // Upper bits
-.counter_value(counter[15:0])    // Lower 16 bits
+parameter BAUD_DIVISOR = 234;  // 27MHz ÷ 115200 ≈ 234 clocks/bit
 ```
 
-## 🏆 Learning Outcomes
+## 🎮 What the Buttons Do
+
+### Button 1 (SW1) - Red LED
+- **Physical**: Tang Nano built-in button (active low)
+- **Electrical**: Connected with pull-up resistor
+- **Function**: Triggers "button1\r\n" UART message
+- **LED**: Lights red LED while pressed
+- **Debouncing**: 3-stage synchronizer prevents multiple triggers
+
+### Button 2 (SW2) - Green LED  
+- **Physical**: Tang Nano built-in button (active low)
+- **Electrical**: Connected with pull-up resistor
+- **Function**: Triggers "button2\r\n" UART message
+- **LED**: Lights green LED while pressed
+- **Debouncing**: 3-stage synchronizer prevents multiple triggers
+
+### UART Communication Details
+- **Baud Rate**: 115200 (fast, reliable)
+- **Format**: 8N1 (8 data bits, no parity, 1 stop bit)
+- **Message Format**: ASCII text + carriage return + line feed
+- **Transmission**: Each button press sends complete message
+- **Timing**: Immediate response to button press
+
+## 🔍 Module Interconnection
+
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│   Buttons   │───▶│    uart.v    │───▶│  uart_debug │
+│  (Physical) │    │   (Control)  │    │ (UART TX)   │
+└─────────────┘    └──────────────┘    └─────────────┘
+                           │                     │
+                           ▼                     ▼
+                   ┌─────────────┐    ┌─────────────┐
+                   │    LEDs     │    │  Terminal   │
+                   │ (Visual FB) │    │   (PC)      │
+                   └─────────────┘    └─────────────┘
+```
+
+## 🛠️ Customization Ideas
+
+### 1. Change Messages
+Edit the message arrays in `uart_debug` module:
+```verilog
+// Current: "button1\r\n" and "button2\r\n"
+// Try: "Hello!\r\n" and "World!\r\n"
+button1_msg[0] = "H"; button1_msg[1] = "e"; // etc.
+```
+
+### 2. Add More Information
+Include timestamps or counter values:
+```verilog
+// Add a counter to track button presses
+reg [15:0] press_counter;
+// Include counter in message: "btn1_005\r\n"
+```
+
+### 3. Different Baud Rates
+```verilog
+// Slower: 9600 baud
+parameter BAUD_DIVISOR = 2812;  // 27MHz ÷ 9600
+
+// Faster: 230400 baud  
+parameter BAUD_DIVISOR = 117;   // 27MHz ÷ 230400
+```
+
+### 4. Add Button 3/4
+Extend to more buttons using GPIO pins:
+```verilog
+input wire btn3, btn4;
+output wire extra_led1, extra_led2;
+```
+
+## 🐛 Troubleshooting Guide
+
+### ❌ No Messages in Terminal
+**Check:**
+1. **Correct COM port**: Device Manager → Ports
+2. **Baud rate**: Must be exactly 115200
+3. **Terminal settings**: 8N1 format
+4. **FPGA programmed**: LEDs should light when buttons pressed
+5. **USB connection**: Try different USB cable/port
+
+### ❌ Messages Appear Multiple Times
+**Cause**: Button bounce not properly filtered
+**Solution**: The debouncing should handle this - check clock frequency
+
+### ❌ LEDs Don't Light
+**Check:**
+1. **FPGA programming**: Re-run `make prog-uart`
+2. **Button connection**: Built-in buttons should work
+3. **Power**: USB cable provides power
+4. **Constraints**: Pin assignments match your board
+
+### ❌ Garbled Characters
+**Check:**
+1. **Baud rate mismatch**: Terminal and FPGA must match
+2. **Clock frequency**: Should be 27MHz
+3. **UART timing**: BAUD_DIVISOR calculation
+
+### ❌ Random Characters
+**Cause**: Usually floating pins or electrical noise
+**Solution**: Check constraint files and pin assignments
+
+## � Learning Outcomes
 
 After completing this project, you'll understand:
 
-✅ **FPGA Basics**: Clock domains, registers, combinational logic  
+✅ **FPGA-PC Communication**: Real-time data exchange  
+✅ **Button Interfacing**: Debouncing and edge detection  
 ✅ **UART Protocol**: Serial communication fundamentals  
-✅ **Debug Strategies**: Real-time hardware monitoring  
-✅ **State Machines**: Sequential logic design  
-✅ **Module Hierarchy**: Building complex designs from simple parts  
-✅ **Pin Constraints**: Connecting internal signals to physical pins  
+✅ **State Machines**: Sequential control logic  
+✅ **Module Hierarchy**: Breaking complex designs into parts  
+✅ **Pin Constraints**: Mapping signals to physical pins  
+✅ **Synchronous Design**: Clock-based digital systems  
+✅ **Hardware Debugging**: Real-time system monitoring  
 
-## 🐛 Troubleshooting
+## 🚀 Next Steps
 
-### No UART Output?
-1. **Check wiring**: TX→RX, GND→GND
-2. **Verify COM port**: Device Manager (Windows) or `dmesg` (Linux)
-3. **Correct baud rate**: Must be 115200
-4. **Terminal settings**: 8N1 (8 data bits, no parity, 1 stop bit)
+### Beginner Projects:
+1. **Add LED patterns**: Make LEDs blink in sequences
+2. **Count button presses**: Display press count in messages
+3. **Add delays**: Introduce timing between button and LED
 
-### LEDs Not Blinking?
-1. **Check programming**: Make sure bitstream loaded
-2. **Verify clock**: Pin 52 should have 27MHz crystal
-3. **Power supply**: Ensure board is powered properly
+### Intermediate Projects:
+1. **Bi-directional UART**: Receive commands from PC
+2. **Protocol design**: JSON or CSV message formats
+3. **Buffer messages**: Use FIFOs for message queuing
 
-### Wrong Debug Values?
-1. **Endianness**: Counter might show different than expected
-2. **Timing**: Debug messages sent every ~5 seconds
-3. **Hex conversion**: Values are in hexadecimal
+### Advanced Projects:
+1. **6502 Computer**: `make 6502-computer` - Full CPU with UART
+2. **Video output**: `make video` - VGA signal generation
+3. **Sound synthesis**: `make sound` - Audio generation
 
-## 🎓 Next Steps
+## 📚 Technical Specifications
 
-Once you master this project:
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| **Clock Frequency** | 27MHz | Tang Nano crystal oscillator |
+| **UART Baud Rate** | 115200 | Standard high-speed rate |
+| **UART Format** | 8N1 | 8 data, no parity, 1 stop |
+| **Button Voltage** | 3.3V | LVCMOS33 with pull-up |
+| **LED Drive** | 8mA | DRIVE=8 in constraints |
+| **Debounce Stages** | 3 | Sufficient for most applications |
+| **Message Length** | 9 chars | "button1\r\n" or "button2\r\n" |
 
-1. **Try the 6502 Computer**: `make 6502-computer`
-2. **Add more debug features**: Memory dumping, CPU registers
-3. **Learn about FIFOs**: Buffer debug messages
-4. **Implement bi-directional UART**: Send commands to FPGA
-5. **Add protocol layers**: JSON, CSV, or custom formats
+## 🏆 Why This Project Matters
 
-## 📚 Key Concepts Learned
+This project teaches **fundamental embedded systems concepts**:
 
-| Concept | Application | Real-World Use |
-|---------|-------------|----------------|
-| **UART** | Debug output | Embedded system communication |
-| **State Machines** | Character transmission | Protocol controllers |
-| **Clock Domains** | Counter timing | Digital signal processing |
-| **Module Hierarchy** | Code organization | Large system design |
-| **Pin Constraints** | I/O mapping | PCB design integration |
+1. **Real-time response**: FPGA reacts immediately to inputs
+2. **Human-machine interface**: Buttons + LEDs + terminal feedback  
+3. **Protocol implementation**: UART is used everywhere in industry
+4. **State machine design**: Core skill for digital system design
+5. **Modular architecture**: Professional FPGA development practices
 
-Happy learning! 🎉
+**Real-world applications**: IoT devices, embedded controllers, debugging interfaces, test equipment, industrial automation.
 
-*This is your gateway to understanding how real FPGA debugging works in industry!*
+---
+
+**🎉 Congratulations!** You've built an interactive FPGA communication system. This is your foundation for understanding how FPGAs interface with the real world!
+
+*Ready to level up? Try the 6502 Computer project next!* 🚀

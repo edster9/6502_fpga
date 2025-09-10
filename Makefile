@@ -321,7 +321,7 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 # GTKWAVE TARGETS
 # ==============================================================================
 
-.PHONY: wave_hello_world wave_6502_computer wave_video wave_sound wave_keyboard wave_simple_cpu wave_debug_uart
+.PHONY: wave_hello_world wave_6502_computer wave_video wave_sound wave_keyboard wave_simple_cpu wave_debug_uart wave_uart
 
 wave_hello_world: $(BUILD_DIR)/hello_world.vcd
 	@echo "$(BLUE)Opening GTKWave for hello_world...$(NC)"
@@ -349,6 +349,10 @@ wave_simple_cpu: $(BUILD_DIR)/simple_cpu.vcd
 
 wave_debug_uart: $(BUILD_DIR)/debug_uart.vcd
 	@echo "$(BLUE)Opening GTKWave for debug_uart...$(NC)"
+	$(ENV_SETUP) gtkwave $<
+
+wave_uart: $(BUILD_DIR)/uart.vcd
+	@echo "$(BLUE)Opening GTKWave for uart...$(NC)"
 	$(ENV_SETUP) gtkwave $<
 
 # ==============================================================================
@@ -515,6 +519,9 @@ clean_uart:
 	$(ENV_SETUP) $(call CLEAN_PROJECT,uart)
 	@echo "$(GREEN)[OK] UART build files cleaned$(NC)"
 
+# Information/listing targets
+.PHONY: list-projects list-boards list-devices list-supported list-gowin
+
 list-projects:
 	@echo "$(BLUE)Available Projects:$(NC)"
 	@echo "  hello_world     - Basic LED Hello World"
@@ -532,6 +539,36 @@ list-boards:
 	@echo "  20k - Tang Nano 20K (GW2A-LV18PG256C8/I7)"
 	@echo ""
 	@echo "Usage: make <target> BOARD=9k|20k"
+
+list-devices:
+	@echo "$(BLUE)Detecting connected FPGA devices...$(NC)"
+	$(ENV_SETUP) openFPGALoader --detect
+
+list-supported:
+	@echo "$(BLUE)Supported FPGA devices by toolchain:$(NC)"
+	$(ENV_SETUP) openFPGALoader --list-boards
+
+list-gowin:
+	@echo "$(BLUE)Supported Gowin/Tang devices:$(NC)"
+	@echo ""
+	@echo "Tang Nano Series (Gowin FPGAs):"
+	@echo "  tangnano1k    - Tang Nano 1K  (GW1N-LV1QN48C6/I5)"
+	@echo "  tangnano4k    - Tang Nano 4K  (GW1NSR-LV4CQN48PC7/I6)"
+	@echo "  tangnano9k    - Tang Nano 9K  (GW1NR-LV9QN88PC6/I5)"
+	@echo "  tangnano20k   - Tang Nano 20K (GW2A-LV18QN88C8/I7)"
+	@echo ""
+	@echo "Tang Primer Series:"
+	@echo "  tangprimer20k - Tang Primer 20K (GW2A-LV18PG256C8/I7)"
+	@echo "  tangprimer25k - Tang Primer 25K (GW2A-LV25UG256C8/I7)"
+	@echo ""
+	@echo "Tang Console/Mega:"
+	@echo "  tangconsole   - Tang Console"
+	@echo "  tangmega138k  - Tang Mega 138K"
+	@echo ""
+	@echo "Lichee Tang:"
+	@echo "  licheeTang    - Lichee Tang (Anlogic FPGA)"
+	@echo ""
+	@echo "$(YELLOW)Note: Use 'make list-devices' to detect connected devices$(NC)"
 
 # ==============================================================================
 # HELP TARGET
@@ -563,6 +600,7 @@ help:
 	@echo "$(GREEN)GTKWAVE TARGETS:$(NC)"
 	@echo "  wave_hello_world     View Hello World waveforms"
 	@echo "  wave_debug_uart      View Debug UART waveforms"
+	@echo "  wave_uart            View UART waveforms"
 	@echo "  wave_6502_computer   View 6502 Computer waveforms"
 	@echo "  wave_video           View Video waveforms"
 	@echo "  wave_sound           View Sound waveforms"
@@ -600,6 +638,9 @@ help:
 	@echo "  clean_simple_cpu     Clean Simple CPU build files"
 	@echo "  list-projects        List all available projects"
 	@echo "  list-boards          List supported boards"
+	@echo "  list-devices         List connected FPGA devices"
+	@echo "  list-supported       List all supported FPGA devices"
+	@echo "  list-gowin           List supported Gowin/Tang devices"
 	@echo "  help                 Show this help"
 	@echo ""
 	@echo "$(GREEN)BOARD SELECTION:$(NC)"
