@@ -1,49 +1,51 @@
 // UART Verilog Project
-// LED counter with UART debug output for learning hardware debugging
+// Button-controlled UART messaging with LED feedback
 
 module uart (
-    input wire clk,          // 27MHz clock from Tang Nano 9K/20K
-    output wire led_r,       // Red LED
-    output wire led_g,       // Green LED
-    output wire led_b,       // Blue LED
+    input wire clk,          // 27MHz clock from Tang Nano 20K
+    input wire btn1,         // Button 1 (active low)
+    input wire btn2,         // Button 2 (active low)
+    output wire led_r,       // Red LED (for btn1)
+    output wire led_g,       // Green LED (for btn2)
+    output wire led_b,       // Blue LED (unused)
     output wire uart_tx      // UART TX for debug output
 );
 
-    // This is a simple binary counter
-    // Each LED represents a bit of the counter
+    // Button debouncing and edge detection
+    reg [2:0] btn1_sync;
+    reg [2:0] btn2_sync;
+    reg btn1_pressed, btn2_pressed;
     
-    // Counter register - 24 bits is enough for visible blinking
-    reg [23:0] counter;
+    // LED control
+    reg led1_on, led2_on;
     
-    // Debug output timing - VERY FAST for original working version
-    reg [18:0] debug_counter;  // Much smaller counter for faster output
-    wire debug_trigger = (debug_counter == 19'd524287); // Trigger when counter reaches 2^19-1
-    
-    // This is the main logic block
-    // It runs on every rising edge of the clock
+    // Button synchronization and edge detection
     always @(posedge clk) begin
-        counter <= counter + 1;       // Increment counter every clock cycle
+        // Synchronize buttons (active low, so invert)
+        btn1_sync <= {btn1_sync[1:0], ~btn1};
+        btn2_sync <= {btn2_sync[1:0], ~btn2};
         
-        // Debug message timing with reset
-        if (debug_counter == 19'd524287) begin
-            debug_counter <= 19'd0;   // Reset to restart the timing cycle
-        end else begin
-            debug_counter <= debug_counter + 1;  // Keep counting
-        end
+        // Detect button press (rising edge after synchronization)
+        btn1_pressed <= (btn1_sync[2:1] == 2'b01);
+        btn2_pressed <= (btn2_sync[2:1] == 2'b01);
+        
+        // LED control - on while button is pressed
+        led1_on <= btn1_sync[2];
+        led2_on <= btn2_sync[2];
     end
     
-    // Connect LEDs to different counter bits
-    // Higher bits change slower, so we get different blink rates
-    assign led_r = counter[21];    // Bit 21: slowest blink (~1.3Hz at 27MHz)
-    assign led_g = counter[20];    // Bit 20: medium blink (~2.6Hz at 27MHz)  
-    assign led_b = counter[19];    // Bit 19: fastest blink (~5.1Hz at 27MHz)
+    // Connect LEDs (inverted because LEDs are active low on Tang Nano)
+    assign led_r = ~led1_on;     // Red LED for button 1
+    assign led_g = ~led2_on;     // Green LED for button 2
+    assign led_b = 1'b1;         // Blue LED off
     
-    // UART Debug Module Instance - original working version
+    // UART Debug Module Instance
     uart_debug debug_uart_inst (
         .clk(clk),
-        .reset(1'b0),                    // No reset for this simple example
-        .uart_tx(uart_tx),               // Connect to UART TX pin
-        .debug_trigger(debug_trigger)    // Send message very frequently
+        .reset(1'b0),
+        .uart_tx(uart_tx),
+        .btn1_trigger(btn1_pressed),
+        .btn2_trigger(btn2_pressed)
     );
     
     /* 
@@ -69,38 +71,59 @@ module uart (
 
 endmodule
 
-// Simple UART Debug Module - Minimal and Robust Version
+// Simple UART Debug Module - Button Message Version
 module uart_debug (
     input wire clk,              // 27MHz system clock
     input wire reset,            // Reset signal
     output reg uart_tx,          // UART TX pin
-    input wire debug_trigger     // When to send debug message
+    input wire btn1_trigger,     // Button 1 press trigger
+    input wire btn2_trigger      // Button 2 press trigger
 );
 
     // UART parameters for 115200 baud at 27MHz
     parameter BAUD_DIVISOR = 234; // 27,000,000 / 115200 ≈ 234
     
-    // Simple state machine
+    // State machine
     reg [2:0] state;
     reg [7:0] baud_counter;
     reg [3:0] bit_counter;
     reg [3:0] char_counter;
     reg [7:0] current_char;
-    reg debug_trigger_prev;
+    reg [3:0] message_length;
+    reg [3:0] current_message;
     
     // States
     parameter IDLE = 0, START = 1, DATA = 2, STOP = 3, NEXT = 4;
     
-    // Simple message: "Hello\r\n"
-    reg [7:0] message [0:6];
+    // Message selection
+    parameter MSG_BUTTON1 = 0, MSG_BUTTON2 = 1;
+    
+    // Message arrays
+    reg [7:0] button1_msg [0:8];  // "button1\r\n" = 9 characters
+    reg [7:0] button2_msg [0:8];  // "button2\r\n" = 9 characters
+    
     initial begin
-        message[0] = "H";
-        message[1] = "e";
-        message[2] = "l";
-        message[3] = "l";
-        message[4] = "o";
-        message[5] = 8'h0D; // \r
-        message[6] = 8'h0A; // \n
+        // Button1 message: "button1\r\n"
+        button1_msg[0] = "b";
+        button1_msg[1] = "u";
+        button1_msg[2] = "t";
+        button1_msg[3] = "t";
+        button1_msg[4] = "o";
+        button1_msg[5] = "n";
+        button1_msg[6] = "1";
+        button1_msg[7] = 8'h0D; // \r
+        button1_msg[8] = 8'h0A; // \n
+        
+        // Button2 message: "button2\r\n"
+        button2_msg[0] = "b";
+        button2_msg[1] = "u";
+        button2_msg[2] = "t";
+        button2_msg[3] = "t";
+        button2_msg[4] = "o";
+        button2_msg[5] = "n";
+        button2_msg[6] = "2";
+        button2_msg[7] = 8'h0D; // \r
+        button2_msg[8] = 8'h0A; // \n
     end
     
     // Main UART logic
@@ -111,17 +134,26 @@ module uart_debug (
             baud_counter <= 0;
             bit_counter <= 0;
             char_counter <= 0;
-            debug_trigger_prev <= 0;
+            message_length <= 0;
+            current_message <= 0;
         end else begin
-            debug_trigger_prev <= debug_trigger;
-            
             case (state)
                 IDLE: begin
                     uart_tx <= 1'b1;
                     baud_counter <= 0;
-                    if (debug_trigger && !debug_trigger_prev) begin
+                    
+                    // Check for button triggers
+                    if (btn1_trigger) begin
                         char_counter <= 0;
-                        current_char <= message[0];
+                        current_message <= MSG_BUTTON1;
+                        message_length <= 8; // 9-1 for 0-indexed
+                        current_char <= button1_msg[0];
+                        state <= START;
+                    end else if (btn2_trigger) begin
+                        char_counter <= 0;
+                        current_message <= MSG_BUTTON2;
+                        message_length <= 8; // 9-1 for 0-indexed
+                        current_char <= button2_msg[0];
                         state <= START;
                     end
                 end
@@ -162,11 +194,16 @@ module uart_debug (
                 end
                 
                 NEXT: begin
-                    if (char_counter >= 6) begin
+                    if (char_counter >= message_length) begin
                         state <= IDLE;
                     end else begin
                         char_counter <= char_counter + 1;
-                        current_char <= message[char_counter + 1];
+                        // Select next character based on current message
+                        if (current_message == MSG_BUTTON1) begin
+                            current_char <= button1_msg[char_counter + 1];
+                        end else begin
+                            current_char <= button2_msg[char_counter + 1];
+                        end
                         state <= START;
                     end
                 end

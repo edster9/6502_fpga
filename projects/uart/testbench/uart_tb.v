@@ -1,5 +1,5 @@
 // UART Testbench
-// Tests the UART debug output functionality
+// Tests the UART button-triggered messaging functionality
 
 `timescale 1ns/1ps
 
@@ -7,12 +7,15 @@ module uart_tb;
 
     // Testbench signals
     reg clk;
+    reg btn1, btn2;
     wire led_r, led_g, led_b;
     wire uart_tx;
     
     // Instantiate the uart module
     uart uut (
         .clk(clk),
+        .btn1(btn1),
+        .btn2(btn2),
         .led_r(led_r),
         .led_g(led_g),
         .led_b(led_b),
@@ -78,21 +81,48 @@ module uart_tb;
     // Test sequence
     initial begin
         // Save waveform data for viewing
-        $dumpfile("build/debug_uart.vcd");
-        $dumpvars(0, debug_uart_tb);
+        $dumpfile("build/uart.vcd");
+        $dumpvars(0, uart_tb);
+        
+        // Initialize inputs
+        btn1 = 1'b1;  // Buttons are active low
+        btn2 = 1'b1;
         
         // Print header
-        $display("=== Debug UART Verilog Simulation ===");
+        $display("=== UART Button Test Simulation ===");
         $display("Time(ns) | LEDs | UART Output");
         $display("---------|------|------------");
-        $display("UART Messages will appear below:");
+        $display("Button press messages will appear below:");
         
-        // Run simulation for enough time to see debug messages
-        #200000000;  // 200 million ns = 200ms (should see multiple debug messages)
+        // Wait for initial settling
+        #1000000;  // 1ms
+        
+        // Test button 1 press
+        $display("Pressing Button 1...");
+        btn1 = 1'b0;  // Press button (active low)
+        #50000;       // Hold for 50us
+        btn1 = 1'b1;  // Release button
+        #10000000;    // Wait 10ms for message transmission
+        
+        // Test button 2 press
+        $display("Pressing Button 2...");
+        btn2 = 1'b0;  // Press button (active low)
+        #50000;       // Hold for 50us
+        btn2 = 1'b1;  // Release button
+        #10000000;    // Wait 10ms for message transmission
+        
+        // Test both buttons pressed together
+        $display("Pressing both buttons...");
+        btn1 = 1'b0;
+        btn2 = 1'b0;
+        #50000;       // Hold for 50us
+        btn1 = 1'b1;
+        btn2 = 1'b1;
+        #20000000;    // Wait 20ms for both messages
         
         $display("");
         $display("=== Simulation Complete! ===");
-        $display("Check build/debug_uart.vcd with GTKWave to see waveforms");
+        $display("Check build/uart.vcd with GTKWave to see waveforms");
         $finish;
     end
     
