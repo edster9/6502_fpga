@@ -55,18 +55,24 @@ module uart (
     2. INPUTS/OUTPUTS: Define the interface to your module
     3. WIRE vs REG: 
        - wire: connects things together (like actual wires)
-       - reg: stores values (like variables)
+       - reg: stores values (like variables in other languages)
+             * Allocated in FPGA fabric (flip-flops/registers), NOT external RAM
+             * Each reg becomes physical storage elements (D flip-flops)
+             * For actual RAM/memory blocks, use different constructs
     4. ALWAYS BLOCKS: Code that runs when something happens (@posedge clk = on clock edge)
     5. ASSIGN: Continuous assignment (always active, like gates)
     6. MODULE INSTANCES: Using other modules inside your design (like calling functions)
     
-    Math: 27MHz clock, counter[21] = 27MHz / 2^21 = ~12.9Hz / 10 = ~1.3Hz blink
+    MEMORY HIERARCHY:
+    - reg variables -> FPGA fabric registers (fast, limited quantity)
+    - Arrays like button1_msg[0:8] -> BRAM blocks (block RAM inside FPGA)
+    - External DRAM/SRAM -> requires memory controllers (not used in this project)
     
-    NEW: UART Debug Output!
-    - Connect a USB-to-serial adapter to pin 17 (TX)
-    - Open a terminal at 115200 baud
-    - See real-time counter values every ~5 seconds
-    - Learn how your FPGA is running in real-time!
+    UART PROJECT: Button-controlled messaging!
+    - Press button 1 -> sends "button1" + lights red LED
+    - Press button 2 -> sends "button2" + lights green LED
+    - Uses built-in USB-serial converter at 115200 baud
+    - See messages in terminal (PuTTY, etc.) connected to Tang Nano COM port
     */
 
 endmodule
