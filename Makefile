@@ -328,45 +328,105 @@ wave_debug_uart: $(BUILD_DIR)/debug_uart.vcd
 	$(ENV_SETUP) gtkwave $<
 
 # ==============================================================================
-# PROGRAMMING TARGETS
+# PROGRAMMING TARGETS (SRAM - Temporary)
 # ==============================================================================
 
-.PHONY: prog_hello_world prog_6502_computer prog_video prog_sound prog_keyboard prog_simple_cpu prog_debug_uart
+.PHONY: prog_hello_world prog_6502_computer prog_hdmi_video prog_composite_video prog_sound prog_input_devices prog_simple_cpu prog_debug_uart
+
+# ==============================================================================
+# FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly)
+# ==============================================================================
+
+.PHONY: flash_hello_world flash_6502_computer flash_hdmi_video flash_composite_video flash_sound flash_input_devices flash_simple_cpu flash_debug_uart
 
 prog_hello_world: $(BUILD_DIR)/hello_world.fs
-	@echo "$(BLUE)Programming hello_world to Tang Nano...$(NC)"
+	@echo "$(BLUE)Programming hello_world to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] hello_world programmed successfully$(NC)"
 
 prog_6502_computer: $(BUILD_DIR)/6502_computer.fs
-	@echo "$(BLUE)Programming 6502_computer to Tang Nano...$(NC)"
+	@echo "$(BLUE)Programming 6502_computer to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] 6502_computer programmed successfully$(NC)"
 
-prog_video: $(BUILD_DIR)/video.fs
-	@echo "$(BLUE)Programming video to Tang Nano...$(NC)"
+prog_hdmi_video: $(BUILD_DIR)/hdmi_video.fs
+	@echo "$(BLUE)Programming hdmi_video to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
-	@echo "$(GREEN)[OK] video programmed successfully$(NC)"
+	@echo "$(GREEN)[OK] hdmi_video programmed successfully$(NC)"
+
+prog_composite_video: $(BUILD_DIR)/composite_video.fs
+	@echo "$(BLUE)Programming composite_video to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] composite_video programmed successfully$(NC)"
 
 prog_sound: $(BUILD_DIR)/sound.fs
-	@echo "$(BLUE)Programming sound to Tang Nano...$(NC)"
+	@echo "$(BLUE)Programming sound to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] sound programmed successfully$(NC)"
 
-prog_keyboard: $(BUILD_DIR)/keyboard.fs
-	@echo "$(BLUE)Programming keyboard to Tang Nano...$(NC)"
+prog_input_devices: $(BUILD_DIR)/input_devices.fs
+	@echo "$(BLUE)Programming input_devices to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
-	@echo "$(GREEN)[OK] keyboard programmed successfully$(NC)"
+	@echo "$(GREEN)[OK] input_devices programmed successfully$(NC)"
 
 prog_simple_cpu: $(BUILD_DIR)/simple_cpu.fs
-	@echo "$(BLUE)Programming simple_cpu to Tang Nano...$(NC)"
+	@echo "$(BLUE)Programming simple_cpu to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] simple_cpu programmed successfully$(NC)"
 
 prog_debug_uart: $(BUILD_DIR)/debug_uart.fs
-	@echo "$(BLUE)Programming debug_uart to Tang Nano...$(NC)"
+	@echo "$(BLUE)Programming debug_uart to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] debug_uart programmed successfully$(NC)"
+
+# Flash Programming Targets (Permanent Storage)
+flash_hello_world: $(BUILD_DIR)/hello_world.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing hello_world to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] hello_world flashed to permanent memory$(NC)"
+
+flash_6502_computer: $(BUILD_DIR)/6502_computer.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing 6502_computer to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] 6502_computer flashed to permanent memory$(NC)"
+
+flash_hdmi_video: $(BUILD_DIR)/hdmi_video.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing hdmi_video to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] hdmi_video flashed to permanent memory$(NC)"
+
+flash_composite_video: $(BUILD_DIR)/composite_video.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing composite_video to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] composite_video flashed to permanent memory$(NC)"
+
+flash_sound: $(BUILD_DIR)/sound.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing sound to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] sound flashed to permanent memory$(NC)"
+
+flash_input_devices: $(BUILD_DIR)/input_devices.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing input_devices to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] input_devices flashed to permanent memory$(NC)"
+
+flash_simple_cpu: $(BUILD_DIR)/simple_cpu.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing simple_cpu to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] simple_cpu flashed to permanent memory$(NC)"
+
+flash_debug_uart: $(BUILD_DIR)/debug_uart.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing debug_uart to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] debug_uart flashed to permanent memory$(NC)"
 
 # ==============================================================================
 # UTILITY TARGETS
@@ -468,14 +528,25 @@ help:
 	@echo "  wave_keyboard        View Keyboard waveforms"
 	@echo "  wave_simple_cpu      View Simple CPU waveforms"
 	@echo ""
-	@echo "$(GREEN)PROGRAMMING TARGETS:$(NC)"
-	@echo "  prog_hello_world     Program Hello World to Tang Nano"
-	@echo "  prog_debug_uart      Program Debug UART to Tang Nano"
-	@echo "  prog_6502_computer   Program 6502 Computer to Tang Nano"
-	@echo "  prog_video           Program Video to Tang Nano"
-	@echo "  prog_sound           Program Sound to Tang Nano"
-	@echo "  prog_keyboard        Program Keyboard to Tang Nano"
-	@echo "  prog_simple_cpu      Program Simple CPU to Tang Nano"
+	@echo "$(GREEN)PROGRAMMING TARGETS (SRAM - Temporary):$(NC)"
+	@echo "  prog_hello_world       Program Hello World to Tang Nano SRAM"
+	@echo "  prog_debug_uart        Program Debug UART to Tang Nano SRAM"
+	@echo "  prog_6502_computer     Program 6502 Computer to Tang Nano SRAM"
+	@echo "  prog_hdmi_video        Program HDMI Video to Tang Nano SRAM"
+	@echo "  prog_composite_video   Program Composite Video to Tang Nano SRAM"
+	@echo "  prog_sound             Program Sound to Tang Nano SRAM"
+	@echo "  prog_input_devices     Program Input Devices to Tang Nano SRAM"
+	@echo "  prog_simple_cpu        Program Simple CPU to Tang Nano SRAM"
+	@echo ""
+	@echo "$(YELLOW)FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly):$(NC)"
+	@echo "  flash_hello_world      Flash Hello World to Tang Nano (PERMANENT)"
+	@echo "  flash_debug_uart       Flash Debug UART to Tang Nano (PERMANENT)"
+	@echo "  flash_6502_computer    Flash 6502 Computer to Tang Nano (PERMANENT)"
+	@echo "  flash_hdmi_video       Flash HDMI Video to Tang Nano (PERMANENT)"
+	@echo "  flash_composite_video  Flash Composite Video to Tang Nano (PERMANENT)"
+	@echo "  flash_sound            Flash Sound to Tang Nano (PERMANENT)"
+	@echo "  flash_input_devices    Flash Input Devices to Tang Nano (PERMANENT)"
+	@echo "  flash_simple_cpu       Flash Simple CPU to Tang Nano (PERMANENT)"
 	@echo ""
 	@echo "$(GREEN)UTILITY TARGETS:$(NC)"
 	@echo "  clean                Clean build directory"
@@ -499,6 +570,10 @@ help:
 	@echo "  make hello_world BOARD=20k      # Build for Tang Nano 20K"
 	@echo "  make sim_6502_computer          # Simulate 6502 computer"
 	@echo "  make wave_6502_computer         # View 6502 computer waveforms"
-	@echo "  make prog_hello_world           # Program hello_world to FPGA"
+	@echo "  make prog_hello_world           # Program hello_world to SRAM (temporary)"
+	@echo "  make flash_hello_world          # Flash hello_world to permanent memory"
+	@echo ""
+	@echo "$(YELLOW)⚠️  WARNING: Flash commands write to permanent memory and wear out flash!$(NC)"
+	@echo "$(YELLOW)Use prog_* commands for development, flash_* only for final deployment.$(NC)"
 	@echo ""
 	@echo "$(BLUE)==============================================================================$(NC)"
