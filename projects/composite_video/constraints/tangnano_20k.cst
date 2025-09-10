@@ -1,0 +1,22 @@
+# Composite Video Project - Tang Nano 20K Constraints  
+# Pin assignments for Gowin GW2A-LV18PG256C8/I7
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 4;
+IO_PORT "clk" IO_TYPE=LVCMOS33;
+
+# Reset input
+IO_LOC  "reset" 88;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for composite video output:
+# Composite video signal, sync outputs, DAC interface
+# Will be added as the project develops
+
+# Example placeholders for future composite video interface:
+# IO_LOC "composite_out" 69;        # Main composite video signal
+# IO_LOC "sync_out" 70;             # Composite sync output
+# IO_LOC "dac_r[0]" 71;             # R-2R DAC for video levels
+# IO_LOC "dac_r[1]" 72;
+# IO_LOC "dac_r[2]" 73;
+# IO_LOC "dac_r[3]" 74;

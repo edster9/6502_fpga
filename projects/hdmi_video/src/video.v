@@ -1,8 +1,8 @@
-// Video Generation Module
-// Simple VGA/LCD video output for Tang Nano FPGA
-// TODO: Implement video timing, frame buffer, and pixel generation
+// HDMI Video Generation Module
+// Simple HDMI/VGA video output for Tang Nano FPGA
+// TODO: Implement HDMI video timing, frame buffer, and pixel generation
 
-module video (
+module hdmi_video (
     input wire clk,
     input wire reset
 );

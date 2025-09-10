@@ -79,7 +79,7 @@ endif
 # MAIN TARGETS
 # ==============================================================================
 
-.PHONY: all help clean clean_hello_world clean_6502_computer clean_video clean_sound clean_keyboard clean_simple_cpu clean_debug_uart
+.PHONY: all help clean clean_hello_world clean_6502_computer clean_hdmi_video clean_composite_video clean_sound clean_input_devices clean_simple_cpu clean_debug_uart
 .DEFAULT_GOAL := help
 
 all: hello_world
@@ -126,21 +126,38 @@ $(BUILD_DIR)/6502_computer.fs: $(BUILD_DIR)/6502_computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502_computer...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
-# Video Project
-.PHONY: video
-video: $(BUILD_DIR)/video.fs
-	@echo "$(GREEN)[OK] Video project built successfully for Tang Nano $(BOARD)$(NC)"
+# HDMI Video Project
+.PHONY: hdmi_video
+hdmi_video: $(BUILD_DIR)/hdmi_video.fs
+	@echo "$(GREEN)[OK] HDMI Video project built successfully for Tang Nano $(BOARD)$(NC)"
 
-$(BUILD_DIR)/video.json: $(PROJECTS_DIR)/video/src/video.v | $(BUILD_DIR)
-	@echo "$(BLUE)Synthesizing video...$(NC)"
+$(BUILD_DIR)/hdmi_video.json: $(PROJECTS_DIR)/hdmi_video/src/video.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing hdmi_video...$(NC)"
 	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
 
-$(BUILD_DIR)/video_pnr.json: $(BUILD_DIR)/video.json
-	@echo "$(BLUE)Place & Route for video...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,video,$(BOARD))
+$(BUILD_DIR)/hdmi_video_pnr.json: $(BUILD_DIR)/hdmi_video.json
+	@echo "$(BLUE)Place & Route for hdmi_video...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,hdmi_video,$(BOARD)) --top hdmi_video
 
-$(BUILD_DIR)/video.fs: $(BUILD_DIR)/video_pnr.json
-	@echo "$(BLUE)Generating bitstream for video...$(NC)"
+$(BUILD_DIR)/hdmi_video.fs: $(BUILD_DIR)/hdmi_video_pnr.json
+	@echo "$(BLUE)Generating bitstream for hdmi_video...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
+# Composite Video Project
+.PHONY: composite_video
+composite_video: $(BUILD_DIR)/composite_video.fs
+	@echo "$(GREEN)[OK] Composite Video project built successfully for Tang Nano $(BOARD)$(NC)"
+
+$(BUILD_DIR)/composite_video.json: $(PROJECTS_DIR)/composite_video/src/composite_video.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing composite_video...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/composite_video_pnr.json: $(BUILD_DIR)/composite_video.json
+	@echo "$(BLUE)Place & Route for composite_video...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,composite_video,$(BOARD)) --top composite_video
+
+$(BUILD_DIR)/composite_video.fs: $(BUILD_DIR)/composite_video_pnr.json
+	@echo "$(BLUE)Generating bitstream for composite_video...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
 # Sound Project
@@ -160,21 +177,21 @@ $(BUILD_DIR)/sound.fs: $(BUILD_DIR)/sound_pnr.json
 	@echo "$(BLUE)Generating bitstream for sound...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
-# Keyboard Project
-.PHONY: keyboard
-keyboard: $(BUILD_DIR)/keyboard.fs
-	@echo "$(GREEN)[OK] Keyboard project built successfully for Tang Nano $(BOARD)$(NC)"
+# Input Devices Project
+.PHONY: input_devices
+input_devices: $(BUILD_DIR)/input_devices.fs
+	@echo "$(GREEN)[OK] Input Devices project built successfully for Tang Nano $(BOARD)$(NC)"
 
-$(BUILD_DIR)/keyboard.json: $(PROJECTS_DIR)/keyboard/src/keyboard.v | $(BUILD_DIR)
-	@echo "$(BLUE)Synthesizing keyboard...$(NC)"
+$(BUILD_DIR)/input_devices.json: $(PROJECTS_DIR)/input_devices/src/keyboard.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing input_devices...$(NC)"
 	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
 
-$(BUILD_DIR)/keyboard_pnr.json: $(BUILD_DIR)/keyboard.json
-	@echo "$(BLUE)Place & Route for keyboard...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,keyboard,$(BOARD))
+$(BUILD_DIR)/input_devices_pnr.json: $(BUILD_DIR)/input_devices.json
+	@echo "$(BLUE)Place & Route for input_devices...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,input_devices,$(BOARD))
 
-$(BUILD_DIR)/keyboard.fs: $(BUILD_DIR)/keyboard_pnr.json
-	@echo "$(BLUE)Generating bitstream for keyboard...$(NC)"
+$(BUILD_DIR)/input_devices.fs: $(BUILD_DIR)/input_devices_pnr.json
+	@echo "$(BLUE)Generating bitstream for input_devices...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
 # Simple CPU Project
@@ -215,7 +232,7 @@ $(BUILD_DIR)/debug_uart.fs: $(BUILD_DIR)/debug_uart_pnr.json
 # SIMULATION TARGETS  
 # ==============================================================================
 
-.PHONY: sim_hello_world sim_6502_computer sim_video sim_sound sim_keyboard sim_simple_cpu sim_debug_uart
+.PHONY: sim_hello_world sim_6502_computer sim_hdmi_video sim_composite_video sim_sound sim_input_devices sim_simple_cpu sim_debug_uart
 
 # Standard simulation targets (check if VCD exists)
 sim_hello_world: $(BUILD_DIR)/hello_world.vcd
@@ -224,14 +241,17 @@ sim_hello_world: $(BUILD_DIR)/hello_world.vcd
 sim_6502_computer: $(BUILD_DIR)/6502_computer.vcd
 	@echo "$(GREEN)[OK] 6502 Computer simulation completed$(NC)"
 
-sim_video: $(BUILD_DIR)/video.vcd
-	@echo "$(GREEN)[OK] Video simulation completed$(NC)"
+sim_hdmi_video: $(BUILD_DIR)/hdmi_video.vcd
+	@echo "$(GREEN)[OK] HDMI Video simulation completed$(NC)"
+
+sim_composite_video: $(BUILD_DIR)/composite_video.vcd
+	@echo "$(GREEN)[OK] Composite Video simulation completed$(NC)"
 
 sim_sound: $(BUILD_DIR)/sound.vcd
 	@echo "$(GREEN)[OK] Sound simulation completed$(NC)"
 
-sim_keyboard: $(BUILD_DIR)/keyboard.vcd
-	@echo "$(GREEN)[OK] Keyboard simulation completed$(NC)"
+sim_input_devices: $(BUILD_DIR)/input_devices.vcd
+	@echo "$(GREEN)[OK] Input Devices simulation completed$(NC)"
 
 sim_simple_cpu: $(BUILD_DIR)/simple_cpu.vcd
 	@echo "$(GREEN)[OK] Simple CPU simulation completed$(NC)"
