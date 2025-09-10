@@ -1,17 +1,17 @@
-// Debug UART Testbench
+// UART Testbench
 // Tests the UART debug output functionality
 
 `timescale 1ns/1ps
 
-module debug_uart_tb;
+module uart_tb;
 
     // Testbench signals
     reg clk;
     wire led_r, led_g, led_b;
     wire uart_tx;
     
-    // Instantiate the debug_uart module
-    debug_uart uut (
+    // Instantiate the uart module
+    uart uut (
         .clk(clk),
         .led_r(led_r),
         .led_g(led_g),

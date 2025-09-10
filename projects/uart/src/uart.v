@@ -1,7 +1,7 @@
-// Debug UART Verilog Project
+// UART Verilog Project
 // LED counter with UART debug output for learning hardware debugging
 
-module debug_uart (
+module uart (
     input wire clk,          // 27MHz clock from Tang Nano 9K/20K
     output wire led_r,       // Red LED
     output wire led_g,       // Green LED

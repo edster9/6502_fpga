@@ -79,7 +79,7 @@ endif
 # MAIN TARGETS
 # ==============================================================================
 
-.PHONY: all help clean clean_hello_world clean_6502_computer clean_hdmi_video clean_composite_video clean_sound clean_input_devices clean_simple_cpu clean_debug_uart
+.PHONY: all help clean clean_hello_world clean_6502_computer clean_hdmi_video clean_composite_video clean_sound clean_input_devices clean_simple_cpu clean_debug_uart clean_uart
 .DEFAULT_GOAL := help
 
 all: hello_world
@@ -228,11 +228,28 @@ $(BUILD_DIR)/debug_uart.fs: $(BUILD_DIR)/debug_uart_pnr.json
 	@echo "$(BLUE)Generating bitstream for debug_uart...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
+# UART Project
+.PHONY: uart
+uart: $(BUILD_DIR)/uart.fs
+	@echo "$(GREEN)[OK] UART project built successfully for Tang Nano $(BOARD)$(NC)"
+
+$(BUILD_DIR)/uart.json: $(PROJECTS_DIR)/uart/src/uart.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing uart...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/uart_pnr.json: $(BUILD_DIR)/uart.json
+	@echo "$(BLUE)Place & Route for uart...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,uart,$(BOARD)) --top uart
+
+$(BUILD_DIR)/uart.fs: $(BUILD_DIR)/uart_pnr.json
+	@echo "$(BLUE)Generating bitstream for uart...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
 # ==============================================================================
 # SIMULATION TARGETS  
 # ==============================================================================
 
-.PHONY: sim_hello_world sim_6502_computer sim_hdmi_video sim_composite_video sim_sound sim_input_devices sim_simple_cpu sim_debug_uart
+.PHONY: sim_hello_world sim_6502_computer sim_hdmi_video sim_composite_video sim_sound sim_input_devices sim_simple_cpu sim_debug_uart sim_uart
 
 # Standard simulation targets (check if VCD exists)
 sim_hello_world: $(BUILD_DIR)/hello_world.vcd
@@ -258,6 +275,9 @@ sim_simple_cpu: $(BUILD_DIR)/simple_cpu.vcd
 
 sim_debug_uart: $(BUILD_DIR)/debug_uart.vcd
 	@echo "$(GREEN)[OK] Debug UART simulation completed$(NC)"
+
+sim_uart: $(BUILD_DIR)/uart.vcd
+	@echo "$(GREEN)[OK] UART simulation completed$(NC)"
 
 # Simulation build rules
 $(BUILD_DIR)/hello_world_sim: $(PROJECTS_DIR)/hello_world/testbench/hello_world_tb.v $(PROJECTS_DIR)/hello_world/src/hello_world.v | $(BUILD_DIR)
@@ -286,6 +306,10 @@ $(BUILD_DIR)/simple_cpu_sim: $(PROJECTS_DIR)/simple_cpu/testbench/simple_cpu_tb.
 
 $(BUILD_DIR)/debug_uart_sim: $(PROJECTS_DIR)/debug_uart/testbench/debug_uart_tb.v $(PROJECTS_DIR)/debug_uart/src/debug_uart.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling debug_uart simulation...$(NC)"
+	$(ENV_SETUP) iverilog -o $@ $^
+
+$(BUILD_DIR)/uart_sim: $(PROJECTS_DIR)/uart/testbench/uart_tb.v $(PROJECTS_DIR)/uart/src/uart.v | $(BUILD_DIR)
+	@echo "$(BLUE)Compiling uart simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
 # VCD generation rules
@@ -331,13 +355,13 @@ wave_debug_uart: $(BUILD_DIR)/debug_uart.vcd
 # PROGRAMMING TARGETS (SRAM - Temporary)
 # ==============================================================================
 
-.PHONY: prog_hello_world prog_6502_computer prog_hdmi_video prog_composite_video prog_sound prog_input_devices prog_simple_cpu prog_debug_uart
+.PHONY: prog_hello_world prog_6502_computer prog_hdmi_video prog_composite_video prog_sound prog_input_devices prog_simple_cpu prog_debug_uart prog_uart
 
 # ==============================================================================
 # FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly)
 # ==============================================================================
 
-.PHONY: flash_hello_world flash_6502_computer flash_hdmi_video flash_composite_video flash_sound flash_input_devices flash_simple_cpu flash_debug_uart
+.PHONY: flash_hello_world flash_6502_computer flash_hdmi_video flash_composite_video flash_sound flash_input_devices flash_simple_cpu flash_debug_uart flash_uart
 
 prog_hello_world: $(BUILD_DIR)/hello_world.fs
 	@echo "$(BLUE)Programming hello_world to Tang Nano SRAM...$(NC)"
@@ -378,6 +402,11 @@ prog_debug_uart: $(BUILD_DIR)/debug_uart.fs
 	@echo "$(BLUE)Programming debug_uart to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] debug_uart programmed successfully$(NC)"
+
+prog_uart: $(BUILD_DIR)/uart.fs
+	@echo "$(BLUE)Programming uart to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] uart programmed successfully$(NC)"
 
 # Flash Programming Targets (Permanent Storage)
 flash_hello_world: $(BUILD_DIR)/hello_world.fs
@@ -428,6 +457,12 @@ flash_debug_uart: $(BUILD_DIR)/debug_uart.fs
 	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
 	@echo "$(GREEN)[OK] debug_uart flashed to permanent memory$(NC)"
 
+flash_uart: $(BUILD_DIR)/uart.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing uart to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] uart flashed to permanent memory$(NC)"
+
 # ==============================================================================
 # UTILITY TARGETS
 # ==============================================================================
@@ -475,10 +510,16 @@ clean_debug_uart:
 	$(ENV_SETUP) $(call CLEAN_PROJECT,debug_uart)
 	@echo "$(GREEN)[OK] Debug UART build files cleaned$(NC)"
 
+clean_uart:
+	@echo "$(YELLOW)Cleaning UART build files...$(NC)"
+	$(ENV_SETUP) $(call CLEAN_PROJECT,uart)
+	@echo "$(GREEN)[OK] UART build files cleaned$(NC)"
+
 list-projects:
 	@echo "$(BLUE)Available Projects:$(NC)"
 	@echo "  hello_world     - Basic LED Hello World"
 	@echo "  debug_uart      - UART Debug Output for Learning"
+	@echo "  uart            - Clean UART Project"
 	@echo "  6502_computer   - 6502 CPU Computer"
 	@echo "  video           - Video Generation Module"
 	@echo "  sound           - Sound Generation Module"
