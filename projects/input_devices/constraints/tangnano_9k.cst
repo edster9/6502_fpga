@@ -1,20 +1,19 @@
-# Keyboard Project - Tang Nano 9K Constraints
-# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+# Input Devices Project - Tang Nano 9K Constraints  
+# Simple switch-to-LED example
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5 (QN88 package)
 
-# Clock input - 27MHz crystal
-IO_LOC  "clk" 52;
+# Clock input - 27MHz crystal (not used in this simple example)
+IO_LOC "clk" 52;
 IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
-# Reset input
-IO_LOC  "reset" 3;
-IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+# Switch inputs (built-in buttons, active low with pull-up)
+IO_LOC "switch1" 3;
+IO_PORT "switch1" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "switch2" 4;
+IO_PORT "switch2" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
-# Future expansion pins for keyboard interface:
-# PS/2 clock and data, USB interface, etc.
-# Will be added as the project develops
-
-# Example placeholders for future keyboard interface:
-# IO_LOC "ps2_clk" 25;
-# IO_LOC "ps2_data" 26;
-# IO_PORT "ps2_clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
-# IO_PORT "ps2_data" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+# LED outputs (built-in RGB LEDs, active low)
+IO_LOC "led1" 18;  # Red LED
+IO_PORT "led1" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC "led2" 17;  # Green LED
+IO_PORT "led2" IO_TYPE=LVCMOS33 DRIVE=8;

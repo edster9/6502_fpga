@@ -182,13 +182,13 @@ $(BUILD_DIR)/sound.fs: $(BUILD_DIR)/sound_pnr.json
 input_devices: $(BUILD_DIR)/input_devices.fs
 	@echo "$(GREEN)[OK] Input Devices project built successfully for Tang Nano $(BOARD)$(NC)"
 
-$(BUILD_DIR)/input_devices.json: $(PROJECTS_DIR)/input_devices/src/keyboard.v | $(BUILD_DIR)
+$(BUILD_DIR)/input_devices.json: $(PROJECTS_DIR)/input_devices/src/input_devices.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing input_devices...$(NC)"
 	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
 
 $(BUILD_DIR)/input_devices_pnr.json: $(BUILD_DIR)/input_devices.json
 	@echo "$(BLUE)Place & Route for input_devices...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,input_devices,$(BOARD))
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,input_devices,$(BOARD)) --top input_devices
 
 $(BUILD_DIR)/input_devices.fs: $(BUILD_DIR)/input_devices_pnr.json
 	@echo "$(BLUE)Generating bitstream for input_devices...$(NC)"
@@ -296,8 +296,8 @@ $(BUILD_DIR)/sound_sim: $(PROJECTS_DIR)/sound/testbench/sound_tb.v $(PROJECTS_DI
 	@echo "$(BLUE)Compiling sound simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
-$(BUILD_DIR)/keyboard_sim: $(PROJECTS_DIR)/keyboard/testbench/keyboard_tb.v $(PROJECTS_DIR)/keyboard/src/keyboard.v | $(BUILD_DIR)
-	@echo "$(BLUE)Compiling keyboard simulation...$(NC)"
+$(BUILD_DIR)/input_devices_sim: $(PROJECTS_DIR)/input_devices/testbench/input_devices_tb.v $(PROJECTS_DIR)/input_devices/src/input_devices.v | $(BUILD_DIR)
+	@echo "$(BLUE)Compiling input_devices simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
 $(BUILD_DIR)/simple_cpu_sim: $(PROJECTS_DIR)/simple_cpu/testbench/simple_cpu_tb.v $(PROJECTS_DIR)/simple_cpu/src/simple_cpu.v | $(BUILD_DIR)
