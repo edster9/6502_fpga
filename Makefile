@@ -79,7 +79,7 @@ endif
 # MAIN TARGETS
 # ==============================================================================
 
-.PHONY: all help clean clean_hello_world clean_6502_computer clean_hdmi_video clean_composite_video clean_sound clean_input_devices clean_simple_cpu clean_debug_uart clean_uart
+.PHONY: all help clean clean_hello_world clean_6502_computer clean_composite_video clean_sound clean_input_devices clean_simple_cpu clean_debug_uart clean_uart
 .DEFAULT_GOAL := help
 
 all: hello_world
@@ -124,23 +124,6 @@ $(BUILD_DIR)/6502_computer_pnr.json: $(BUILD_DIR)/6502_computer.json
 
 $(BUILD_DIR)/6502_computer.fs: $(BUILD_DIR)/6502_computer_pnr.json
 	@echo "$(BLUE)Generating bitstream for 6502_computer...$(NC)"
-	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
-
-# HDMI Video Project
-.PHONY: hdmi_video
-hdmi_video: $(BUILD_DIR)/hdmi_video.fs
-	@echo "$(GREEN)[OK] HDMI Video project built successfully for Tang Nano $(BOARD)$(NC)"
-
-$(BUILD_DIR)/hdmi_video.json: $(PROJECTS_DIR)/hdmi_video/src/hdmi_video.v $(PROJECTS_DIR)/hdmi_video/src/testpattern.v $(PROJECTS_DIR)/hdmi_video/src/tmds_rpll.v $(PROJECTS_DIR)/hdmi_video/src/dvi_tx_top.v | $(BUILD_DIR)
-	@echo "$(BLUE)Synthesizing hdmi_video...$(NC)"
-	$(ENV_SETUP) yosys -p "read_verilog $(PROJECTS_DIR)/hdmi_video/src/hdmi_video.v $(PROJECTS_DIR)/hdmi_video/src/testpattern.v $(PROJECTS_DIR)/hdmi_video/src/tmds_rpll.v $(PROJECTS_DIR)/hdmi_video/src/dvi_tx_top.v; synth_gowin -json $@"
-
-$(BUILD_DIR)/hdmi_video_pnr.json: $(BUILD_DIR)/hdmi_video.json
-	@echo "$(BLUE)Place & Route for hdmi_video...$(NC)"
-	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,hdmi_video,$(BOARD)) --top hdmi_video
-
-$(BUILD_DIR)/hdmi_video.fs: $(BUILD_DIR)/hdmi_video_pnr.json
-	@echo "$(BLUE)Generating bitstream for hdmi_video...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
 # Composite Video Project
@@ -331,7 +314,7 @@ $(BUILD_DIR)/uart.fs: $(BUILD_DIR)/uart_pnr.json
 # SIMULATION TARGETS  
 # ==============================================================================
 
-.PHONY: sim_hello_world sim_6502_computer sim_hdmi_video sim_composite_video sim_sound sim_input_devices sim_simple_cpu sim_debug_uart sim_uart
+.PHONY: sim_hello_world sim_6502_computer sim_composite_video sim_sound sim_input_devices sim_simple_cpu sim_debug_uart sim_uart
 
 # Standard simulation targets (check if VCD exists)
 sim_hello_world: $(BUILD_DIR)/hello_world.vcd
@@ -339,9 +322,6 @@ sim_hello_world: $(BUILD_DIR)/hello_world.vcd
 
 sim_6502_computer: $(BUILD_DIR)/6502_computer.vcd
 	@echo "$(GREEN)[OK] 6502 Computer simulation completed$(NC)"
-
-sim_hdmi_video: $(BUILD_DIR)/hdmi_video.vcd
-	@echo "$(GREEN)[OK] HDMI Video simulation completed$(NC)"
 
 sim_composite_video: $(BUILD_DIR)/composite_video.vcd
 	@echo "$(GREEN)[OK] Composite Video simulation completed$(NC)"
@@ -458,13 +438,13 @@ wave_uart: $(BUILD_DIR)/uart.vcd
 # PROGRAMMING TARGETS (SRAM - Temporary)
 # ==============================================================================
 
-.PHONY: prog_hello_world prog_6502_computer prog_hdmi_video prog_composite_video prog_sound prog_input_devices prog_simple_cpu prog_debug_uart prog_uart
+.PHONY: prog_hello_world prog_6502_computer prog_composite_video prog_sound prog_input_devices prog_simple_cpu prog_debug_uart prog_uart
 
 # ==============================================================================
 # FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly)
 # ==============================================================================
 
-.PHONY: flash_hello_world flash_6502_computer flash_hdmi_video flash_composite_video flash_sound flash_input_devices flash_simple_cpu flash_debug_uart flash_uart
+.PHONY: flash_hello_world flash_6502_computer flash_composite_video flash_sound flash_input_devices flash_simple_cpu flash_debug_uart flash_uart
 
 prog_hello_world: $(BUILD_DIR)/hello_world.fs
 	@echo "$(BLUE)Programming hello_world to Tang Nano SRAM...$(NC)"
@@ -475,11 +455,6 @@ prog_6502_computer: $(BUILD_DIR)/6502_computer.fs
 	@echo "$(BLUE)Programming 6502_computer to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] 6502_computer programmed successfully$(NC)"
-
-prog_hdmi_video: $(BUILD_DIR)/hdmi_video.fs
-	@echo "$(BLUE)Programming hdmi_video to Tang Nano SRAM...$(NC)"
-	$(ENV_SETUP) openFPGALoader -b tangnano $<
-	@echo "$(GREEN)[OK] hdmi_video programmed successfully$(NC)"
 
 prog_composite_video: $(BUILD_DIR)/composite_video.fs
 	@echo "$(BLUE)Programming composite_video to Tang Nano SRAM...$(NC)"
@@ -592,12 +567,6 @@ flash_6502_computer: $(BUILD_DIR)/6502_computer.fs
 	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
 	@echo "$(GREEN)[OK] 6502_computer flashed to permanent memory$(NC)"
-
-flash_hdmi_video: $(BUILD_DIR)/hdmi_video.fs
-	@echo "$(YELLOW)⚠️  WARNING: Writing hdmi_video to FLASH (permanent) ⚠️$(NC)"
-	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
-	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
-	@echo "$(GREEN)[OK] hdmi_video flashed to permanent memory$(NC)"
 
 flash_composite_video: $(BUILD_DIR)/composite_video.fs
 	@echo "$(YELLOW)⚠️  WARNING: Writing composite_video to FLASH (permanent) ⚠️$(NC)"
@@ -779,7 +748,6 @@ help:
 	@echo "  prog_hello_world       Program Hello World to Tang Nano SRAM"
 	@echo "  prog_debug_uart        Program Debug UART to Tang Nano SRAM"
 	@echo "  prog_6502_computer     Program 6502 Computer to Tang Nano SRAM"
-	@echo "  prog_hdmi_video        Program HDMI Video to Tang Nano SRAM"
 	@echo "  prog_composite_video   Program Composite Video to Tang Nano SRAM"
 	@echo "  prog_sound             Program Sound to Tang Nano SRAM"
 	@echo "  prog_input_devices     Program Input Devices to Tang Nano SRAM"
@@ -789,7 +757,6 @@ help:
 	@echo "  flash_hello_world      Flash Hello World to Tang Nano (PERMANENT)"
 	@echo "  flash_debug_uart       Flash Debug UART to Tang Nano (PERMANENT)"
 	@echo "  flash_6502_computer    Flash 6502 Computer to Tang Nano (PERMANENT)"
-	@echo "  flash_hdmi_video       Flash HDMI Video to Tang Nano (PERMANENT)"
 	@echo "  flash_composite_video  Flash Composite Video to Tang Nano (PERMANENT)"
 	@echo "  flash_sound            Flash Sound to Tang Nano (PERMANENT)"
 	@echo "  flash_input_devices    Flash Input Devices to Tang Nano (PERMANENT)"
