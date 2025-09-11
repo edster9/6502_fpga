@@ -1,0 +1,21 @@
+# Video Project - Tang Nano 9K Constraints
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Reset input
+IO_LOC  "reset" 3;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for video output:
+# VGA/LCD interface, pixel clock, sync signals, etc.
+# Will be added as the project develops
+
+# Example placeholders for future video interface:
+# IO_LOC "video_r[0]" 25;
+# IO_LOC "video_g[0]" 26;
+# IO_LOC "video_b[0]" 27;
+# IO_LOC "video_hsync" 28;
+# IO_LOC "video_vsync" 29;

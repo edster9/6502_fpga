@@ -1,0 +1,21 @@
+# Sound Project - Tang Nano 9K Constraints
+# Pin assignments for Gowin GW1NR-LV9QN88PC6/I5
+
+# Clock input - 27MHz crystal
+IO_LOC  "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Reset input
+IO_LOC  "reset" 3;
+IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Future expansion pins for audio output:
+# DAC interface, PWM outputs, I2S, etc.
+# Will be added as the project develops
+
+# Example placeholders for future audio interface:
+# IO_LOC "audio_left" 25;
+# IO_LOC "audio_right" 26;
+# IO_LOC "audio_pwm" 27;
+# IO_LOC "i2s_sclk" 28;
+# IO_LOC "i2s_lrclk" 29;
