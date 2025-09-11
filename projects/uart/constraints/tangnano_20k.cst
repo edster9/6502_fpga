@@ -1,0 +1,24 @@
+# UART Project - Tang Nano 20K Constraints  
+# Pin assignments for Gowin GW2A-LV18QN88C8/I7 (QN88 package)
+
+# Clock input - 27MHz crystal
+IO_LOC "clk" 4;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# Button inputs (active low with pull-up)
+IO_LOC "btn1" 88;
+IO_PORT "btn1" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "btn2" 87;
+IO_PORT "btn2" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# RGB LED outputs (built-in LEDs, active low)
+IO_LOC "led_r" 15;
+IO_LOC "led_g" 19; 
+IO_LOC "led_b" 16;
+IO_PORT "led_r" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_g" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_b" IO_TYPE=LVCMOS33 DRIVE=8;
+
+# UART TX pin for debug output (built-in USB-Serial)
+IO_LOC "uart_tx" 69;
+IO_PORT "uart_tx" IO_TYPE=LVCMOS33 DRIVE=8;
