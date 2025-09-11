@@ -1,62 +1,57 @@
-// Input Devices Learning Module
-// Simple switch-to-LED example for Tang Nano 20K
-// Direct connection: Switch 1 → LED 1, Switch 2 → LED 2
+// Input Devices Learning Module - PS/2 Keyboard Interface
+// Basic PS/2 signal monitoring and keyboard interface development
+// Tang Nano 20K with PS/2 keyboard connection
 
 module input_devices (
-    input wire clk,           // 27MHz clock (not used in this simple example)
+    input wire clk,           // 27MHz system clock
     input wire switch1,       // Switch 1 (Tang Nano button SW1) 
     input wire switch2,       // Switch 2 (Tang Nano button SW2)
+    input wire ps2_clk,       // PS/2 Clock from keyboard (Green wire)
+    input wire ps2_data,      // PS/2 Data from keyboard (White wire)
     output wire led1,         // LED 1 (Red LED)
-    output wire led2          // LED 2 (Green LED)
+    output wire led2,         // LED 2 (Green LED)
+    output wire ps2_clk_out,  // PS/2 Clock signal for scope monitoring
+    output wire ps2_data_out  // PS/2 Data signal for scope monitoring
 );
 
-    // Direct connection - no debouncing, no clocking
-    // This is the SIMPLEST possible digital input example
+    // Tang Nano built-in switches - preserved for testing
+    assign led1 = switch1;   // LED follows switch1 (release = on)
+    assign led2 = switch2;   // LED follows switch2 (release = on)
     
-    // Tang Nano switches are active LOW (pressed = 0, released = 1)
-    // Tang Nano LEDs are active LOW (on = 0, off = 1) 
-    // So we need to invert both for intuitive behavior
+    // Clock divider for test signals
+    reg [25:0] counter = 0;
+    always @(posedge clk) begin
+        counter <= counter + 1;
+    end
     
-    assign led1 = switch1;    // LED on when switch pressed
-    assign led2 = switch2;    // LED on when switch pressed
+    // PS/2 signal monitoring - Back to normal after isolating issue
+    // Pin 30 had hardware/routing issues, moved to Pin 31
+    assign ps2_clk_out = ps2_clk;      // Pin 27 monitors ps2_clk signal (pin 31)
+    assign ps2_data_out = ps2_data;    // Pin 28 monitors ps2_data signal (pin 29)
     
     /* 
-    Learning Notes - SIMPLE SWITCH-TO-LED:
+    PS/2 KEYBOARD CONNECTION GUIDE:
     
-    1. ASSIGN STATEMENTS: 
-       - Continuous assignment (always active)
-       - Like connecting wires directly
-       - No clock needed for simple logic
+    PS/2 Extension Cable Wire Colors → Tang Nano 20K Connections:
+    - White (DATA)  → Pin 25 (ps2_data input)
+    - Black (GND)   → GND on Tang Nano
+    - Red (VCC)     → 3.3V on Tang Nano  
+    - Green (CLOCK) → Pin 26 (ps2_clk input)
     
-    2. ACTIVE LOW vs ACTIVE HIGH:
-       - Switch pressed = 0V = logic 0 (active low)
-       - Switch released = 3.3V = logic 1 (active low)
-       - LED on = 0V = logic 0 (active low) 
-       - LED off = 3.3V = logic 1 (active low)
+    Signal Monitoring Outputs for Oscilloscope:
+    - ps2_clk_out  → Pin 27 (monitor PS/2 clock)
+    - ps2_data_out → Pin 28 (monitor PS/2 data)
     
-    3. POLARITY MATCHING:
-       - switch1 = 0 (pressed) → led1 = 0 (on) ✓
-       - switch1 = 1 (released) → led1 = 1 (off) ✓
-       - Perfect match! No inversion needed.
+    Expected PS/2 Signals:
+    - Clock: ~10-16 kHz when keys pressed (idle = high)
+    - Data: Serial data frames when keys pressed
+    - 11-bit frames: Start(0) + 8 data bits + parity + stop(1)
     
-    4. NO DEBOUNCING NEEDED:
-       - LEDs respond instantly to switch state
-       - No edge detection or counting involved
-       - Mechanical bounce doesn't matter for this application
-    
-    5. NO CLOCK NEEDED:
-       - Pure combinational logic
-       - Propagation delay is nanoseconds
-       - Real-time response
-    
-    Expected Behavior:
-    - Press Switch 1 → Red LED turns on immediately
-    - Release Switch 1 → Red LED turns off immediately  
-    - Press Switch 2 → Green LED turns on immediately
-    - Release Switch 2 → Green LED turns off immediately
-    - Both switches work independently
-    
-    This is the foundation for ALL digital input processing!
+    Testing Steps:
+    1. Connect PS/2 keyboard and power up
+    2. Use scope to monitor pins 27 (clock) and 28 (data)  
+    3. Press keys and observe PS/2 protocol signals
+    4. Verify clock edges and data transitions
     */
 
 endmodule

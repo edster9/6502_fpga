@@ -194,6 +194,88 @@ $(BUILD_DIR)/input_devices.fs: $(BUILD_DIR)/input_devices_pnr.json
 	@echo "$(BLUE)Generating bitstream for input_devices...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
 
+# Input Devices Debug Project (for oscilloscope monitoring)
+.PHONY: input_devices_debug
+input_devices_debug: $(BUILD_DIR)/input_devices_debug.fs
+	@echo "$(GREEN)[OK] Input Devices Debug project built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(YELLOW)Connect oscilloscope to debug pins:$(NC)"
+	@echo "$(YELLOW)  Pin 25: Raw switch1 signal (with bounce)$(NC)"
+	@echo "$(YELLOW)  Pin 26: Raw switch2 signal (with bounce)$(NC)"
+	@echo "$(YELLOW)  Pin 27: Debounced switch1 signal$(NC)"
+	@echo "$(YELLOW)  Pin 28: Debounced switch2 signal$(NC)"
+
+# Scope Test Project (for oscilloscope setup verification)
+.PHONY: scope_test
+scope_test: $(BUILD_DIR)/scope_test.fs
+	@echo "$(GREEN)[OK] Scope Test project built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(YELLOW)Scope test signals:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 1Hz square wave (slow blink)$(NC)"
+	@echo "$(YELLOW)  Pin 26: 10Hz square wave (fast blink)$(NC)"
+	@echo "$(YELLOW)  Pin 27: Constant HIGH (3.3V)$(NC)"
+	@echo "$(YELLOW)  Pin 28: Constant LOW (0V)$(NC)"
+
+# LED Test Project (visual verification with onboard LEDs)
+.PHONY: led_test
+led_test: $(BUILD_DIR)/led_test.fs
+	@echo "$(GREEN)[OK] LED Test project built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(YELLOW)LED indicators:$(NC)"
+	@echo "$(YELLOW)  Blue LED: Always on$(NC)"
+	@echo "$(YELLOW)  Red LED: Blinks 2Hz (fast)$(NC)"
+	@echo "$(YELLOW)  Green LED: Blinks 1Hz (slow)$(NC)"
+	@echo "$(YELLOW)Scope test signals:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 1Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 26: 10Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 27: Constant HIGH (3.3V)$(NC)"
+	@echo "$(YELLOW)  Pin 28: Constant LOW (0V)$(NC)"
+
+$(BUILD_DIR)/input_devices_debug.json: $(PROJECTS_DIR)/input_devices/src/input_devices_debug.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing input_devices_debug...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/input_devices_debug_pnr.json: $(BUILD_DIR)/input_devices_debug.json
+	@echo "$(BLUE)Place & Route for input_devices_debug...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(PROJECTS_DIR)/input_devices/constraints/tangnano_$(BOARD)_debug.cst --top input_devices_debug
+
+$(BUILD_DIR)/input_devices_debug.fs: $(BUILD_DIR)/input_devices_debug_pnr.json
+	@echo "$(BLUE)Generating bitstream for input_devices_debug...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
+$(BUILD_DIR)/scope_test.json: $(PROJECTS_DIR)/input_devices/src/scope_test.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing scope_test...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/scope_test_pnr.json: $(BUILD_DIR)/scope_test.json
+	@echo "$(BLUE)Place & Route for scope_test...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(PROJECTS_DIR)/input_devices/constraints/scope_test_$(BOARD).cst --top scope_test
+
+$(BUILD_DIR)/scope_test.fs: $(BUILD_DIR)/scope_test_pnr.json
+	@echo "$(BLUE)Generating bitstream for scope_test...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
+$(BUILD_DIR)/led_test.json: $(PROJECTS_DIR)/input_devices/src/led_test.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing led_test...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/led_test_pnr.json: $(BUILD_DIR)/led_test.json
+	@echo "$(BLUE)Place & Route for led_test...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(PROJECTS_DIR)/input_devices/constraints/led_test_$(BOARD).cst --top led_test
+
+$(BUILD_DIR)/led_test.fs: $(BUILD_DIR)/led_test_pnr.json
+	@echo "$(BLUE)Generating bitstream for led_test...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
+$(BUILD_DIR)/pin_test.json: $(PROJECTS_DIR)/input_devices/src/pin_test.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing pin_test...$(NC)"
+	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+
+$(BUILD_DIR)/pin_test_pnr.json: $(BUILD_DIR)/pin_test.json
+	@echo "$(BLUE)Place & Route for pin_test...$(NC)"
+	$(ENV_SETUP) nextpnr-himbaechel --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(PROJECTS_DIR)/input_devices/constraints/pin_test_$(BOARD).cst --top pin_test
+
+$(BUILD_DIR)/pin_test.fs: $(BUILD_DIR)/pin_test_pnr.json
+	@echo "$(BLUE)Generating bitstream for pin_test...$(NC)"
+	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
 # Simple CPU Project
 .PHONY: simple_cpu
 simple_cpu: $(BUILD_DIR)/simple_cpu.fs
@@ -270,6 +352,10 @@ sim_sound: $(BUILD_DIR)/sound.vcd
 sim_input_devices: $(BUILD_DIR)/input_devices.vcd
 	@echo "$(GREEN)[OK] Input Devices simulation completed$(NC)"
 
+sim_input_devices_debug: $(BUILD_DIR)/input_devices_debug.vcd
+	@echo "$(GREEN)[OK] Input Devices Debug simulation completed$(NC)"
+	@echo "$(YELLOW)Use 'make wave_input_devices_debug' to view bounce analysis in GTKWave$(NC)"
+
 sim_simple_cpu: $(BUILD_DIR)/simple_cpu.vcd
 	@echo "$(GREEN)[OK] Simple CPU simulation completed$(NC)"
 
@@ -300,6 +386,10 @@ $(BUILD_DIR)/input_devices_sim: $(PROJECTS_DIR)/input_devices/testbench/input_de
 	@echo "$(BLUE)Compiling input_devices simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
 
+$(BUILD_DIR)/input_devices_debug_sim: $(PROJECTS_DIR)/input_devices/testbench/input_devices_debug_tb.v $(PROJECTS_DIR)/input_devices/src/input_devices_debug.v | $(BUILD_DIR)
+	@echo "$(BLUE)Compiling input_devices_debug simulation...$(NC)"
+	$(ENV_SETUP) iverilog -o $@ $^
+
 $(BUILD_DIR)/simple_cpu_sim: $(PROJECTS_DIR)/simple_cpu/testbench/simple_cpu_tb.v $(PROJECTS_DIR)/simple_cpu/src/simple_cpu.v | $(BUILD_DIR)
 	@echo "$(BLUE)Compiling simple_cpu simulation...$(NC)"
 	$(ENV_SETUP) iverilog -o $@ $^
@@ -321,7 +411,7 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/%_sim
 # GTKWAVE TARGETS
 # ==============================================================================
 
-.PHONY: wave_hello_world wave_6502_computer wave_video wave_sound wave_keyboard wave_simple_cpu wave_debug_uart wave_uart
+.PHONY: wave_hello_world wave_6502_computer wave_video wave_sound wave_keyboard wave_input_devices wave_input_devices_debug wave_simple_cpu wave_debug_uart wave_uart
 
 wave_hello_world: $(BUILD_DIR)/hello_world.vcd
 	@echo "$(BLUE)Opening GTKWave for hello_world...$(NC)"
@@ -341,6 +431,15 @@ wave_sound: $(BUILD_DIR)/sound.vcd
 
 wave_keyboard: $(BUILD_DIR)/keyboard.vcd
 	@echo "$(BLUE)Opening GTKWave for keyboard...$(NC)"
+	$(ENV_SETUP) gtkwave $<
+
+wave_input_devices: $(BUILD_DIR)/input_devices.vcd
+	@echo "$(BLUE)Opening GTKWave for input_devices...$(NC)"
+	$(ENV_SETUP) gtkwave $<
+
+wave_input_devices_debug: $(BUILD_DIR)/input_devices_debug.vcd
+	@echo "$(BLUE)Opening GTKWave for input_devices_debug...$(NC)"
+	@echo "$(YELLOW)Look for switch bounce patterns in the waveform viewer$(NC)"
 	$(ENV_SETUP) gtkwave $<
 
 wave_simple_cpu: $(BUILD_DIR)/simple_cpu.vcd
@@ -397,6 +496,63 @@ prog_input_devices: $(BUILD_DIR)/input_devices.fs
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] input_devices programmed successfully$(NC)"
 
+prog_input_devices_debug: $(BUILD_DIR)/input_devices_debug.fs
+	@echo "$(BLUE)Programming input_devices_debug to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] input_devices_debug programmed successfully$(NC)"
+	@echo "$(YELLOW)Connect oscilloscope probes to:$(NC)"
+	@echo "$(YELLOW)  Pin 25: Raw switch1 (with bounce)$(NC)"
+	@echo "$(YELLOW)  Pin 26: Raw switch2 (with bounce)$(NC)"
+	@echo "$(YELLOW)  Pin 27: Debounced switch1$(NC)"
+	@echo "$(YELLOW)  Pin 28: Debounced switch2$(NC)"
+
+prog_scope_test: $(BUILD_DIR)/scope_test.fs
+	@echo "$(BLUE)Programming scope_test to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] scope_test programmed successfully$(NC)"
+	@echo "$(YELLOW)Verify these signals on scope:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 1Hz square wave (1 second period)$(NC)"
+	@echo "$(YELLOW)  Pin 26: 10Hz square wave (0.1 second period)$(NC)"
+	@echo "$(YELLOW)  Pin 27: Constant 3.3V$(NC)"
+	@echo "$(YELLOW)  Pin 28: Constant 0V$(NC)"
+
+led_test: $(BUILD_DIR)/led_test.fs
+	@echo "$(GREEN)[OK] led_test built successfully$(NC)"
+	@echo "$(YELLOW)Visual verification:$(NC)"
+	@echo "$(YELLOW)  Blue LED: Always on$(NC)"
+	@echo "$(YELLOW)  Red LED: Blinks 2Hz (fast)$(NC)"
+	@echo "$(YELLOW)  Green LED: Blinks 1Hz (slow)$(NC)"
+	@echo "$(YELLOW)Scope signals:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 1Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 26: 10Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 27: Constant 3.3V$(NC)"
+	@echo "$(YELLOW)  Pin 28: Constant 0V$(NC)"
+
+prog_led_test: $(BUILD_DIR)/led_test.fs
+	@echo "$(BLUE)Programming led_test to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] led_test programmed successfully$(NC)"
+	@echo "$(YELLOW)Visual verification:$(NC)"
+	@echo "$(YELLOW)  Blue LED: Always on$(NC)"
+	@echo "$(YELLOW)  Red LED: Blinks 2Hz (fast)$(NC)"
+	@echo "$(YELLOW)  Green LED: Blinks 1Hz (slow)$(NC)"
+	@echo "$(YELLOW)Scope signals:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 1Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 26: 10Hz square wave$(NC)"
+	@echo "$(YELLOW)  Pin 27: Constant 3.3V$(NC)"
+	@echo "$(YELLOW)  Pin 28: Constant 0V$(NC)"
+
+prog_pin_test: $(BUILD_DIR)/pin_test.fs
+	@echo "$(BLUE)Programming pin_test to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano $<
+	@echo "$(GREEN)[OK] pin_test programmed successfully$(NC)"
+	@echo "$(YELLOW)Pin test pattern - alternating high/low:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 3.3V  |  Pin 26: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 27: 3.3V  |  Pin 28: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 29: 3.3V  |  Pin 30: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 31: 3.3V  |  Pin 32: 0V$(NC)"
+	@echo "$(YELLOW)Test each pin to find which reads 3.3V vs 0V$(NC)"
+
 prog_simple_cpu: $(BUILD_DIR)/simple_cpu.fs
 	@echo "$(BLUE)Programming simple_cpu to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
@@ -413,6 +569,18 @@ prog_uart: $(BUILD_DIR)/uart.fs
 	@echo "$(GREEN)[OK] uart programmed successfully$(NC)"
 
 # Flash Programming Targets (Permanent Storage)
+flash_pin_test: $(BUILD_DIR)/pin_test.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing pin_test to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
+	@echo "$(GREEN)[OK] pin_test flashed to permanent memory$(NC)"
+	@echo "$(YELLOW)Pin test pattern - alternating high/low:$(NC)"
+	@echo "$(YELLOW)  Pin 25: 3.3V  |  Pin 26: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 27: 3.3V  |  Pin 28: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 29: 3.3V  |  Pin 30: 0V$(NC)"
+	@echo "$(YELLOW)  Pin 31: 3.3V  |  Pin 32: 0V$(NC)"
+	@echo "$(YELLOW)Board can now be unplugged and powered independently$(NC)"
+
 flash_hello_world: $(BUILD_DIR)/hello_world.fs
 	@echo "$(YELLOW)⚠️  WARNING: Writing hello_world to FLASH (permanent) ⚠️$(NC)"
 	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"

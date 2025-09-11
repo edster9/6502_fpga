@@ -31,8 +31,8 @@ module input_devices_tb;
         $dumpvars(0, input_devices_tb);
         
         $display("=== Input Devices Switch-LED Test ===");
-        $display("Testing direct switch-to-LED connection");
-        $display("Switches and LEDs are active LOW");
+        $display("Testing switch-to-LED connection with active high logic");
+        $display("Switches are inverted to make pressed = LED on");
         $display("");
         
         // Initialize - both switches released (active low = 1)
@@ -81,13 +81,13 @@ module input_devices_tb;
         $display("  switch2=%b, led2=%b (LED should be OFF)", switch2, led2);
         $display("");
         
-        // Verify expected behavior
-        if (led1 == switch1 && led2 == switch2) begin
-            $display("✓ SUCCESS: LEDs follow switches perfectly!");
-            $display("✓ No debouncing needed for this simple application");
+        // Verify expected behavior (now with inversion)
+        if (led1 == ~switch1 && led2 == ~switch2) begin
+            $display("✓ SUCCESS: LEDs respond to pressed switches correctly!");
+            $display("✓ Active high logic working with switch inversion");
             $display("✓ Pure combinational logic working correctly");
         end else begin
-            $display("✗ ERROR: LED behavior doesn't match switches");
+            $display("✗ ERROR: LED behavior doesn't match inverted switches");
         end
         
         $display("");

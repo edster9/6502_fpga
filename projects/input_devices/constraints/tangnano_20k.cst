@@ -1,19 +1,36 @@
-# Input Devices Project - Tang Nano 20K Constraints
-# Simple switch-to-LED example
+# Input Devices Project - Tang Nano 20K Constraints  
+# PS/2 Keyboard Interface Development
 # Pin assignments for Gowin GW2A-LV18QN88C8/I7 (QN88 package)
 
-# Clock input - 27MHz crystal (not used in this simple example)
+# Clock input - 27MHz crystal
 IO_LOC "clk" 4;
 IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
-# Switch inputs (built-in buttons, active low with pull-up)
+# Built-in switch inputs (preserved for testing)
 IO_LOC "switch1" 88;
 IO_PORT "switch1" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 IO_LOC "switch2" 87;
 IO_PORT "switch2" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
-# LED outputs (built-in RGB LEDs, active low)
+# Built-in LED outputs 
 IO_LOC "led1" 15;  # Red LED
 IO_PORT "led1" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC "led2" 19;  # Green LED  
 IO_PORT "led2" IO_TYPE=LVCMOS33 DRIVE=8;
+
+# PS/2 Keyboard Interface
+# Connect PS/2 keyboard wires directly as follows:
+# White wire (DATA)  → Pin 74 (IOT34B)
+# Green wire (CLOCK) → Pin 75 (IOT34A)  
+# Yellow wire (VCC)  → Tang Nano 3.3V
+# Blue wire (GND)    → Tang Nano GND
+IO_LOC "ps2_data" 74;  # PS/2 Data line (White wire)
+IO_PORT "ps2_data" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "ps2_clk" 75;   # PS/2 Clock line (Green wire)
+IO_PORT "ps2_clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+# PS/2 Signal Monitoring Outputs (for oscilloscope)
+IO_LOC "ps2_clk_out" 27;   # Monitor PS/2 clock signal
+IO_PORT "ps2_clk_out" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC "ps2_data_out" 28;  # Monitor PS/2 data signal
+IO_PORT "ps2_data_out" IO_TYPE=LVCMOS33 DRIVE=8;
