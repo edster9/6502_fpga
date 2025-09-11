@@ -10,8 +10,8 @@
 #
 # Usage Examples:
 #   make help                    - Show all available commands
-#   make hello_world             - Build hello_world project for Tang Nano 9K
-#   make hello_world BOARD=20k   - Build hello_world project for Tang Nano 20K
+#   make hello_world             - Build hello_world project for Tang Nano 20K
+#   make hello_world BOARD=9k    - Build hello_world project for Tang Nano 9K
 #   make sim_hello_world         - Simulate hello_world project
 #   make wave_hello_world        - View hello_world waveforms in GTKWave
 #   make prog_hello_world        - Program hello_world to Tang Nano
@@ -31,8 +31,8 @@ define PROJECT_CONSTRAINTS
 $(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst
 endef
 
-# Board configuration (default: 9k, can override with BOARD=20k)
-BOARD ?= 9k
+# Board configuration (default: 20k, can override with BOARD=9k)
+BOARD ?= 20k
 ifeq ($(BOARD),20k)
     DEVICE := GW2A-LV18QN88C8/I7
     FAMILY := GW2A-18C
@@ -131,9 +131,9 @@ $(BUILD_DIR)/6502_computer.fs: $(BUILD_DIR)/6502_computer_pnr.json
 hdmi_video: $(BUILD_DIR)/hdmi_video.fs
 	@echo "$(GREEN)[OK] HDMI Video project built successfully for Tang Nano $(BOARD)$(NC)"
 
-$(BUILD_DIR)/hdmi_video.json: $(PROJECTS_DIR)/hdmi_video/src/video.v | $(BUILD_DIR)
+$(BUILD_DIR)/hdmi_video.json: $(PROJECTS_DIR)/hdmi_video/src/hdmi_video.v $(PROJECTS_DIR)/hdmi_video/src/testpattern.v $(PROJECTS_DIR)/hdmi_video/src/tmds_rpll.v $(PROJECTS_DIR)/hdmi_video/src/dvi_tx_top.v | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing hdmi_video...$(NC)"
-	$(ENV_SETUP) yosys -p "read_verilog $<; synth_gowin -json $@"
+	$(ENV_SETUP) yosys -p "read_verilog $(PROJECTS_DIR)/hdmi_video/src/hdmi_video.v $(PROJECTS_DIR)/hdmi_video/src/testpattern.v $(PROJECTS_DIR)/hdmi_video/src/tmds_rpll.v $(PROJECTS_DIR)/hdmi_video/src/dvi_tx_top.v; synth_gowin -json $@"
 
 $(BUILD_DIR)/hdmi_video_pnr.json: $(BUILD_DIR)/hdmi_video.json
 	@echo "$(BLUE)Place & Route for hdmi_video...$(NC)"
