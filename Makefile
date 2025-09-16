@@ -1,5 +1,5 @@
 # ==============================================================================
-# FPGA Development Makefile for Tang Nano 9K/20K
+# FPGA Development Makefile for Tang Nano 9K/20K and iCE40 FPGA Stick
 # ==============================================================================
 # This Makefile simplifies all FPGA development tasks:
 # - Building projects for different boards
@@ -12,6 +12,7 @@
 #   make help                    - Show all available commands
 #   make hello_world             - Build hello_world project for Tang Nano 20K
 #   make hello_world BOARD=9k    - Build hello_world project for Tang Nano 9K
+#   make playground BOARD=ice40  - Build playground project for iCE40 stick
 #   make sim_hello_world         - Simulate hello_world project
 #   make wave_hello_world        - View hello_world waveforms in GTKWave
 #   make prog_hello_world        - Program hello_world to Tang Nano
@@ -28,17 +29,32 @@ PROJECTS_DIR := projects
 
 # Function to get project-specific constraint file
 define PROJECT_CONSTRAINTS
-$(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst
+$(if $(filter ice40,$(2)),$(PROJECTS_DIR)/$(1)/constraints/ice40_stick.pcf,$(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst)
 endef
 
-# Board configuration (default: 20k, can override with BOARD=9k)
+# Board configuration (default: 20k, can override with BOARD=9k or BOARD=ice40)
 BOARD ?= 20k
 ifeq ($(BOARD),20k)
     DEVICE := GW2A-LV18QN88C8/I7
     FAMILY := GW2A-18C
+    SYNTH_CMD := synth_gowin
+    PNR_TOOL := nextpnr-himbaechel
+    PACK_TOOL := gowin_pack
+    PROG_BOARD := tangnano
+else ifeq ($(BOARD),ice40)
+    DEVICE := hx1k
+    PACKAGE := tq144
+    SYNTH_CMD := synth_ice40
+    PNR_TOOL := nextpnr-ice40
+    PACK_TOOL := icepack
+    PROG_TOOL := iceprog
 else
     DEVICE := GW1NR-LV9QN88PC6/I5
     FAMILY := GW1N-9C
+    SYNTH_CMD := synth_gowin
+    PNR_TOOL := nextpnr-himbaechel
+    PACK_TOOL := gowin_pack
+    PROG_BOARD := tangnano
 endif
 
 # OSS CAD Suite setup - bash only
@@ -142,6 +158,42 @@ $(BUILD_DIR)/composite_video_pnr.json: $(BUILD_DIR)/composite_video.json
 $(BUILD_DIR)/composite_video.fs: $(BUILD_DIR)/composite_video_pnr.json
 	@echo "$(BLUE)Generating bitstream for composite_video...$(NC)"
 	$(ENV_SETUP) gowin_pack -d $(DEVICE) -o $@ $<
+
+# Playground Project
+.PHONY: playground
+ifeq ($(BOARD),ice40)
+playground: $(BUILD_DIR)/playground.bin
+	@echo "$(GREEN)[OK] Playground project built successfully for iCE40$(NC)"
+else
+playground: $(BUILD_DIR)/playground.fs
+	@echo "$(GREEN)[OK] Playground project built successfully for Tang Nano $(BOARD)$(NC)"
+endif
+
+$(BUILD_DIR)/playground.json: $(PROJECTS_DIR)/playground/src/playground.v | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing playground...$(NC)"
+ifeq ($(BOARD),ice40)
+	$(ENV_SETUP) yosys -p "read_verilog -D ICE40 $<; $(SYNTH_CMD) -top playground -json $@"
+else
+	$(ENV_SETUP) yosys -p "read_verilog $<; $(SYNTH_CMD) -json $@"
+endif
+
+ifeq ($(BOARD),ice40)
+$(BUILD_DIR)/playground.asc: $(BUILD_DIR)/playground.json
+	@echo "$(BLUE)Place & Route for playground (iCE40)...$(NC)"
+	$(ENV_SETUP) $(PNR_TOOL) --$(DEVICE) --package $(PACKAGE) --json $< --pcf $(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --asc $@
+
+$(BUILD_DIR)/playground.bin: $(BUILD_DIR)/playground.asc
+	@echo "$(BLUE)Generating bitstream for playground (iCE40)...$(NC)"
+	$(ENV_SETUP) $(PACK_TOOL) $< $@
+else
+$(BUILD_DIR)/playground_pnr.json: $(BUILD_DIR)/playground.json
+	@echo "$(BLUE)Place & Route for playground...$(NC)"
+	$(ENV_SETUP) $(PNR_TOOL) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --top playground
+
+$(BUILD_DIR)/playground.fs: $(BUILD_DIR)/playground_pnr.json
+	@echo "$(BLUE)Generating bitstream for playground...$(NC)"
+	$(ENV_SETUP) $(PACK_TOOL) -d $(DEVICE) -o $@ $<
+endif
 
 # Sound Project
 .PHONY: sound
@@ -326,6 +378,9 @@ sim_6502_computer: $(BUILD_DIR)/6502_computer.vcd
 sim_composite_video: $(BUILD_DIR)/composite_video.vcd
 	@echo "$(GREEN)[OK] Composite Video simulation completed$(NC)"
 
+sim_playground: $(BUILD_DIR)/playground.vcd
+	@echo "$(GREEN)[OK] Playground simulation completed$(NC)"
+
 sim_sound: $(BUILD_DIR)/sound.vcd
 	@echo "$(GREEN)[OK] Sound simulation completed$(NC)"
 
@@ -460,6 +515,28 @@ prog_composite_video: $(BUILD_DIR)/composite_video.fs
 	@echo "$(BLUE)Programming composite_video to Tang Nano SRAM...$(NC)"
 	$(ENV_SETUP) openFPGALoader -b tangnano $<
 	@echo "$(GREEN)[OK] composite_video programmed successfully$(NC)"
+
+ifeq ($(BOARD),ice40)
+prog_playground: $(BUILD_DIR)/playground.bin
+	@echo "$(YELLOW)⚠️  WARNING: SRAM programming may not work on unmodified iCEstick boards ⚠️$(NC)"
+	@echo "$(YELLOW)If LEDs are dim/not working, use 'make flash_playground BOARD=ice40' instead$(NC)"
+	@echo "$(BLUE)Programming playground to iCE40 SRAM (temporary)...$(NC)"
+	$(ENV_SETUP) $(PROG_TOOL) -S $<
+	@echo "$(GREEN)[OK] playground programmed to SRAM (may require hardware mods to work)$(NC)"
+else
+prog_playground: $(BUILD_DIR)/playground.fs
+	@echo "$(BLUE)Programming playground to Tang Nano SRAM...$(NC)"
+	$(ENV_SETUP) openFPGALoader -b $(PROG_BOARD) $<
+	@echo "$(GREEN)[OK] playground programmed successfully$(NC)"
+endif
+
+# iCE40-specific convenience target (flash is more reliable than SRAM)
+ifeq ($(BOARD),ice40)
+run_playground: $(BUILD_DIR)/playground.bin
+	@echo "$(BLUE)Running playground on iCE40 (using flash for reliability)...$(NC)"
+	$(ENV_SETUP) $(PROG_TOOL) $<
+	@echo "$(GREEN)[OK] playground running on iCE40$(NC)"
+endif
 
 prog_sound: $(BUILD_DIR)/sound.fs
 	@echo "$(BLUE)Programming sound to Tang Nano SRAM...$(NC)"
@@ -604,6 +681,20 @@ flash_uart: $(BUILD_DIR)/uart.fs
 	$(ENV_SETUP) openFPGALoader -b tangnano -f $<
 	@echo "$(GREEN)[OK] uart flashed to permanent memory$(NC)"
 
+ifeq ($(BOARD),ice40)
+flash_playground: $(BUILD_DIR)/playground.bin
+	@echo "$(YELLOW)⚠️  WARNING: Writing playground to iCE40 FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) $(PROG_TOOL) $<
+	@echo "$(GREEN)[OK] playground flashed to permanent memory$(NC)"
+else
+flash_playground: $(BUILD_DIR)/playground.fs
+	@echo "$(YELLOW)⚠️  WARNING: Writing playground to FLASH (permanent) ⚠️$(NC)"
+	@echo "$(YELLOW)This will wear out flash memory with repeated use!$(NC)"
+	$(ENV_SETUP) openFPGALoader -b $(PROG_BOARD) -f $<
+	@echo "$(GREEN)[OK] playground flashed to permanent memory$(NC)"
+endif
+
 # ==============================================================================
 # UTILITY TARGETS
 # ==============================================================================
@@ -672,10 +763,11 @@ list-projects:
 
 list-boards:
 	@echo "$(BLUE)Supported Boards:$(NC)"
-	@echo "  9k  - Tang Nano 9K (GW1NR-LV9QN88PC6/I5) [default]"
-	@echo "  20k - Tang Nano 20K (GW2A-LV18PG256C8/I7)"
+	@echo "  9k   - Tang Nano 9K (GW1NR-LV9QN88PC6/I5) [default]"
+	@echo "  20k  - Tang Nano 20K (GW2A-LV18PG256C8/I7)"
+	@echo "  ice40- iCE40 FPGA Stick (Lattice iCE40 HX1K)"
 	@echo ""
-	@echo "Usage: make <target> BOARD=9k|20k"
+	@echo "Usage: make <target> BOARD=9k|20k|ice40"
 
 list-devices:
 	@echo "$(BLUE)Detecting connected FPGA devices...$(NC)"
@@ -713,7 +805,7 @@ list-gowin:
 
 help:
 	@echo "$(BLUE)==============================================================================$(NC)"
-	@echo "$(BLUE)FPGA Development Makefile for Tang Nano 9K/20K$(NC)"
+	@echo "$(BLUE)FPGA Development Makefile for Tang Nano 9K/20K and iCE40$(NC)"
 	@echo "$(BLUE)==============================================================================$(NC)"
 	@echo ""
 	@echo "$(GREEN)BUILD TARGETS:$(NC)"
@@ -724,6 +816,8 @@ help:
 	@echo "  sound                Build Sound project"
 	@echo "  keyboard             Build Keyboard project"
 	@echo "  simple_cpu           Build Simple CPU project"
+	@echo "  playground           Build Playground project (LED counter)"
+	@echo "  run_playground       Build & run Playground on iCE40 (BOARD=ice40 only)"
 	@echo ""
 	@echo "$(GREEN)SIMULATION TARGETS:$(NC)"
 	@echo "  sim_hello_world      Simulate Hello World"
@@ -752,6 +846,7 @@ help:
 	@echo "  prog_sound             Program Sound to Tang Nano SRAM"
 	@echo "  prog_input_devices     Program Input Devices to Tang Nano SRAM"
 	@echo "  prog_simple_cpu        Program Simple CPU to Tang Nano SRAM"
+	@echo "  prog_playground        Program Playground to FPGA SRAM"
 	@echo ""
 	@echo "$(YELLOW)FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly):$(NC)"
 	@echo "  flash_hello_world      Flash Hello World to Tang Nano (PERMANENT)"
@@ -781,16 +876,23 @@ help:
 	@echo "$(GREEN)BOARD SELECTION:$(NC)"
 	@echo "  Default: Tang Nano 9K"
 	@echo "  For Tang Nano 20K: make <target> BOARD=20k"
+	@echo "  For iCE40 Stick:   make <target> BOARD=ice40"
 	@echo ""
 	@echo "$(GREEN)EXAMPLES:$(NC)"
 	@echo "  make hello_world                # Build for Tang Nano 9K"
 	@echo "  make hello_world BOARD=20k      # Build for Tang Nano 20K"
+	@echo "  make playground BOARD=ice40     # Build for iCE40 Stick"
 	@echo "  make sim_6502_computer          # Simulate 6502 computer"
 	@echo "  make wave_6502_computer         # View 6502 computer waveforms"
+	@echo "  make run_playground BOARD=ice40 # Run on iCE40 (recommended - uses flash)"
 	@echo "  make prog_hello_world           # Program hello_world to SRAM (temporary)"
+	@echo "  make flash_playground BOARD=ice40 # Flash to iCE40 (permanent)"
 	@echo "  make flash_hello_world          # Flash hello_world to permanent memory"
 	@echo ""
 	@echo "$(YELLOW)⚠️  WARNING: Flash commands write to permanent memory and wear out flash!$(NC)"
 	@echo "$(YELLOW)Use prog_* commands for development, flash_* only for final deployment.$(NC)"
+	@echo ""
+	@echo "$(CYAN)📝 NOTE: iCE40 SRAM programming may not work on unmodified iCEstick boards.$(NC)"
+	@echo "$(CYAN)For iCE40: Use 'run_playground' or 'flash_playground' for reliable operation.$(NC)"
 	@echo ""
 	@echo "$(BLUE)==============================================================================$(NC)"

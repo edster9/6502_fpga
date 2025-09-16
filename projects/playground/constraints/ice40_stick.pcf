@@ -1,0 +1,20 @@
+# Playground Project - iCE40 Stick Constraints
+# Generic pin assignments for iCE40 FPGA stick development boards
+# This file uses common pinout patterns for iCE40 sticks
+
+# Clock input - typically 12MHz crystal on iCE40 boards
+set_io clk 21
+
+# LED outputs - common LED pins on iCE40 development boards
+# Adjust these based on your specific board's pinout
+set_io led[0] 95
+set_io led[1] 96
+set_io led[2] 97
+set_io led[3] 98
+set_io led[4] 99
+set_io led[5] 101
+
+# Note: These are generic pin assignments for iCE40 sticks
+# You may need to adjust them based on your specific board's pinout
+# Common iCE40 boards like iCEstick use different pin numbers
+# Check your board's documentation for exact pin assignments
