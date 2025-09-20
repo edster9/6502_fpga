@@ -43,7 +43,7 @@ ifeq ($(BOARD),20k)
     PROG_BOARD := tangnano
 else ifeq ($(BOARD),ice40)
     DEVICE := hx1k
-    PACKAGE := tq144
+    PACKAGE := vq100
     SYNTH_CMD := synth_ice40
     PNR_TOOL := nextpnr-ice40
     PACK_TOOL := icepack
@@ -518,11 +518,10 @@ prog_composite_video: $(BUILD_DIR)/composite_video.fs
 
 ifeq ($(BOARD),ice40)
 prog_playground: $(BUILD_DIR)/playground.bin
-	@echo "$(YELLOW)⚠️  WARNING: SRAM programming may not work on unmodified iCEstick boards ⚠️$(NC)"
-	@echo "$(YELLOW)If LEDs are dim/not working, use 'make flash_playground BOARD=ice40' instead$(NC)"
-	@echo "$(BLUE)Programming playground to iCE40 SRAM (temporary)...$(NC)"
-	$(ENV_SETUP) $(PROG_TOOL) -S $<
-	@echo "$(GREEN)[OK] playground programmed to SRAM (may require hardware mods to work)$(NC)"
+	@echo "$(BLUE)Programming playground to iCE40 SRAM (interface B)...$(NC)"
+	$(ENV_SETUP) iceprog -I B -S -v $<
+	@echo "$(GREEN)[OK] playground programmed to SRAM successfully$(NC)"
+	@echo "$(YELLOW)Note: SRAM configuration is temporary - lost on power cycle$(NC)"
 else
 prog_playground: $(BUILD_DIR)/playground.fs
 	@echo "$(BLUE)Programming playground to Tang Nano SRAM...$(NC)"
@@ -892,7 +891,7 @@ help:
 	@echo "$(YELLOW)⚠️  WARNING: Flash commands write to permanent memory and wear out flash!$(NC)"
 	@echo "$(YELLOW)Use prog_* commands for development, flash_* only for final deployment.$(NC)"
 	@echo ""
-	@echo "$(CYAN)📝 NOTE: iCE40 SRAM programming may not work on unmodified iCEstick boards.$(NC)"
-	@echo "$(CYAN)For iCE40: Use 'run_playground' or 'flash_playground' for reliable operation.$(NC)"
+	@echo "$(CYAN)📝 Go Board iCE40: SRAM programming works via interface B (temporary, fast iteration)$(NC)"
+	@echo "$(CYAN)Flash programming via interface A (permanent, survives power cycle)$(NC)"
 	@echo ""
 	@echo "$(BLUE)==============================================================================$(NC)"

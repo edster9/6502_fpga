@@ -1,3 +1,4 @@
+/*
 module playground
 (
     input clk,
@@ -25,4 +26,22 @@ always @(posedge clk) begin
 end
 
 assign led = ledCounter;
+endmodule
+*/
+
+module playground
+  (input i_Switch_1,  
+   input i_Switch_2,
+   input i_Switch_3,
+   input i_Switch_4,
+   output o_LED_1,
+   output o_LED_2,
+   output o_LED_3,
+   output o_LED_4);
+       
+assign o_LED_1 = 1'b1;        // ON - Clear SRAM test
+assign o_LED_2 = 1'b0;        // OFF - Clear SRAM test  
+assign o_LED_3 = 1'b1;        // ON - Clear SRAM test
+assign o_LED_4 = 1'b0;        // OFF - Clear SRAM test
+
 endmodule
