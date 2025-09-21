@@ -518,10 +518,10 @@ prog_composite_video: $(BUILD_DIR)/composite_video.fs
 
 ifeq ($(BOARD),ice40)
 prog_playground: $(BUILD_DIR)/playground.bin
-	@echo "$(BLUE)Programming playground to iCE40 SRAM (interface B)...$(NC)"
-	$(ENV_SETUP) iceprog -I B -S -v $<
-	@echo "$(GREEN)[OK] playground programmed to SRAM successfully$(NC)"
-	@echo "$(YELLOW)Note: SRAM configuration is temporary - lost on power cycle$(NC)"
+	@echo "$(BLUE)Programming playground to iCE40 Flash (interface A)...$(NC)"
+	$(ENV_SETUP) iceprog -I A -v $<
+	@echo "$(GREEN)[OK] playground programmed to Flash successfully$(NC)"
+	@echo "$(YELLOW)Note: Flash configuration is permanent - survives power cycle$(NC)"
 else
 prog_playground: $(BUILD_DIR)/playground.fs
 	@echo "$(BLUE)Programming playground to Tang Nano SRAM...$(NC)"
@@ -845,7 +845,7 @@ help:
 	@echo "  prog_sound             Program Sound to Tang Nano SRAM"
 	@echo "  prog_input_devices     Program Input Devices to Tang Nano SRAM"
 	@echo "  prog_simple_cpu        Program Simple CPU to Tang Nano SRAM"
-	@echo "  prog_playground        Program Playground to FPGA SRAM"
+	@echo "  prog_playground        Program Playground to FPGA (iCE40: Flash, Tang Nano: SRAM)"
 	@echo ""
 	@echo "$(YELLOW)FLASH PROGRAMMING TARGETS (Permanent - Use Sparingly):$(NC)"
 	@echo "  flash_hello_world      Flash Hello World to Tang Nano (PERMANENT)"
