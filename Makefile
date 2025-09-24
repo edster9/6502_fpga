@@ -1,5 +1,5 @@
 # ==============================================================================
-# FPGA Development Makefile for Tang Nano 9K/20K and iCE40 FPGA Stick
+# FPGA Development Makefile for Tang Nano 20K, Tang Primer 25K, and iCE40 FPGA Stick
 # ==============================================================================
 # This Makefile simplifies all FPGA development tasks:
 # - Building projects for different boards
@@ -9,15 +9,17 @@
 # - Managing multiple projects
 #
 # Usage Examples:
-#   make help                    - Show all available commands
-#   make hello_world             - Build hello_world project for Tang Nano 20K
-#   make hello_world BOARD=9k    - Build hello_world project for Tang Nano 9K
-#   make hello_world BOARD=25k   - Build hello_world project for Tang Primer 25K
-#   make playground BOARD=ice40  - Build playground project for iCE40 stick
-#   make sim_hello_world         - Simulate hello_world project
-#   make wave_hello_world        - View hello_world waveforms in GTKWave
-#   make prog_hello_world        - Program hello_world to Tang Nano
-#   make clean                   - Clean all build files
+#   make help                       - Show all available commands
+#   make hello_world                - Build hello_world project for Tang Nano 20K
+#   make hello_world BOARD=nano_20k - Build hello_world project for Tang Nano 20K
+#   make hello_world BOARD=primer_25k - Build hello_world project for Tang Primer 25K
+#   make playground BOARD=ice40     - Build playground project for iCE40 stick
+#   make playground BOARD=nano_20k  - Build playground project for Tang Nano 20K
+#   make playground BOARD=primer_25k - Build playground project for Tang Primer 25K
+#   make sim_hello_world            - Simulate hello_world project
+#   make wave_hello_world           - View hello_world waveforms in GTKWave
+#   make prog_hello_world           - Program hello_world to Tang Nano
+#   make clean                      - Clean all build files
 # ==============================================================================
 
 # ==============================================================================
@@ -30,26 +32,26 @@ PROJECTS_DIR := projects
 
 # Function to get project-specific constraint file
 define PROJECT_CONSTRAINTS
-$(if $(filter ice40,$(2)),$(PROJECTS_DIR)/$(1)/constraints/ice40_stick.pcf,$(if $(filter 25k,$(2)),$(PROJECTS_DIR)/$(1)/constraints/tang_primer_$(2).cst,$(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst))
+$(if $(filter ice40,$(2)),$(PROJECTS_DIR)/$(1)/constraints/ice40.pcf,$(if $(filter primer_25k,$(2)),$(PROJECTS_DIR)/$(1)/constraints/primer_25k.cst,$(PROJECTS_DIR)/$(1)/constraints/nano_20k.cst))
 endef
 
-# Board configuration (default: 20k, can override with BOARD=9k, BOARD=25k or BOARD=ice40)
-BOARD ?= 20k
-ifeq ($(BOARD),20k)
+# Board configuration (default: nano_20k, can override with BOARD=nano_20k, BOARD=primer_25k or BOARD=ice40)
+BOARD ?= nano_20k
+ifeq ($(BOARD),nano_20k)
     DEVICE := GW2A-LV18QN88C8/I7
     FAMILY := GW2A-18C
     SYNTH_CMD := synth_gowin
     PNR_TOOL := nextpnr-himbaechel
     PACK_TOOL := gowin_pack
     PROG_BOARD := tangnano
-else ifeq ($(BOARD),25k)
+else ifeq ($(BOARD),primer_25k)
     DEVICE := GW5A-LV25MG121NES
     PACK_DEVICE := GW5A-25A
     FAMILY := GW5A-25A
     SYNTH_CMD := synth_gowin
     PNR_TOOL := nextpnr-himbaechel
     PACK_TOOL := gowin_pack
-    PROG_BOARD := tangnano
+    PROG_BOARD := tangprimer25k
 else ifeq ($(BOARD),ice40)
     DEVICE := hx1k
     PACKAGE := vq100
@@ -58,12 +60,7 @@ else ifeq ($(BOARD),ice40)
     PACK_TOOL := icepack
     PROG_TOOL := iceprog
 else
-    DEVICE := GW1NR-LV9QN88PC6/I5
-    FAMILY := GW1N-9C
-    SYNTH_CMD := synth_gowin
-    PNR_TOOL := nextpnr-himbaechel
-    PACK_TOOL := gowin_pack
-    PROG_BOARD := tangnano
+    $(error Unsupported board: $(BOARD). Supported boards are: nano_20k, primer_25k, ice40)
 endif
 
 # OSS CAD Suite setup - bash only
@@ -175,13 +172,24 @@ playground: $(BUILD_DIR)/playground.bin
 	@echo "$(GREEN)[OK] Playground project built successfully for iCE40$(NC)"
 else
 playground: $(BUILD_DIR)/playground.fs
-	@echo "$(GREEN)[OK] Playground project built successfully for Tang Nano $(BOARD)$(NC)"
+	@echo "$(GREEN)[OK] Playground project built successfully for $(BOARD)$(NC)"
 endif
 
-$(BUILD_DIR)/playground.json: $(PROJECTS_DIR)/playground/src/playground.v | $(BUILD_DIR)
-	@echo "$(BLUE)Synthesizing playground...$(NC)"
+# Define source file based on board
 ifeq ($(BOARD),ice40)
-	$(ENV_SETUP) yosys -p "read_verilog -D ICE40 $<; $(SYNTH_CMD) -top playground -json $@"
+PLAYGROUND_SRC = $(PROJECTS_DIR)/playground/src/playground_ice40.v
+else ifeq ($(BOARD),nano_20k)
+PLAYGROUND_SRC = $(PROJECTS_DIR)/playground/src/playground_nano_20k.v
+else ifeq ($(BOARD),primer_25k)
+PLAYGROUND_SRC = $(PROJECTS_DIR)/playground/src/playground_primer_25k.v
+else
+$(error Unsupported board: $(BOARD). Supported boards are: ice40, nano_20k, primer_25k)
+endif
+
+$(BUILD_DIR)/playground.json: $(PLAYGROUND_SRC) | $(BUILD_DIR)
+	@echo "$(BLUE)Synthesizing playground for $(BOARD)...$(NC)"
+ifeq ($(BOARD),ice40)
+	$(ENV_SETUP) yosys -p "read_verilog $<; $(SYNTH_CMD) -top playground -json $@"
 else
 	$(ENV_SETUP) yosys -p "read_verilog $<; $(SYNTH_CMD) -json $@"
 endif
@@ -196,16 +204,16 @@ $(BUILD_DIR)/playground.bin: $(BUILD_DIR)/playground.asc
 	$(ENV_SETUP) $(PACK_TOOL) $< $@
 else
 $(BUILD_DIR)/playground_pnr.json: $(BUILD_DIR)/playground.json
-	@echo "$(BLUE)Place & Route for playground...$(NC)"
-ifeq ($(BOARD),25k)
+	@echo "$(BLUE)Place & Route for playground ($(BOARD))...$(NC)"
+ifeq ($(BOARD),primer_25k)
 	$(ENV_SETUP) $(PNR_TOOL) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --vopt sspi_as_gpio --vopt cpu_as_gpio --top playground
 else
 	$(ENV_SETUP) $(PNR_TOOL) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --top playground
 endif
 
 $(BUILD_DIR)/playground.fs: $(BUILD_DIR)/playground_pnr.json
-	@echo "$(BLUE)Generating bitstream for playground...$(NC)"
-ifeq ($(BOARD),25k)
+	@echo "$(BLUE)Generating bitstream for playground ($(BOARD))...$(NC)"
+ifeq ($(BOARD),primer_25k)
 	$(ENV_SETUP) $(PACK_TOOL) --sspi_as_gpio --cpu_as_gpio -d $(PACK_DEVICE) -o $@ $<
 else
 	$(ENV_SETUP) $(PACK_TOOL) -d $(DEVICE) -o $@ $<
@@ -783,7 +791,7 @@ list-boards:
 	@echo "  20k  - Tang Nano 20K (GW2A-LV18PG256C8/I7)"
 	@echo "  ice40- iCE40 FPGA Stick (Lattice iCE40 HX1K)"
 	@echo ""
-	@echo "Usage: make <target> BOARD=9k|20k|ice40"
+	@echo "Usage: make <target> BOARD=nano_20k|primer_25k|ice40"
 
 list-devices:
 	@echo "$(BLUE)Detecting connected FPGA devices...$(NC)"
@@ -799,8 +807,8 @@ list-gowin:
 	@echo "Tang Nano Series (Gowin FPGAs):"
 	@echo "  tangnano1k    - Tang Nano 1K  (GW1N-LV1QN48C6/I5)"
 	@echo "  tangnano4k    - Tang Nano 4K  (GW1NSR-LV4CQN48PC7/I6)"
-	@echo "  tangnano9k    - Tang Nano 9K  (GW1NR-LV9QN88PC6/I5)"
 	@echo "  tangnano20k   - Tang Nano 20K (GW2A-LV18QN88C8/I7)"
+	@echo "  tangprimer25k - Tang Primer 25K (GW5A-LV25MG121NES)"
 	@echo ""
 	@echo "Tang Primer Series:"
 	@echo "  tangprimer20k - Tang Primer 20K (GW2A-LV18PG256C8/I7)"
@@ -821,7 +829,7 @@ list-gowin:
 
 help:
 	@echo "$(BLUE)==============================================================================$(NC)"
-	@echo "$(BLUE)FPGA Development Makefile for Tang Nano 9K/20K and iCE40$(NC)"
+	@echo "$(BLUE)FPGA Development Makefile for Tang Nano 20K, Tang Primer 25K, and iCE40$(NC)"
 	@echo "$(BLUE)==============================================================================$(NC)"
 	@echo ""
 	@echo "$(GREEN)BUILD TARGETS:$(NC)"
@@ -890,13 +898,15 @@ help:
 	@echo "  help                 Show this help"
 	@echo ""
 	@echo "$(GREEN)BOARD SELECTION:$(NC)"
-	@echo "  Default: Tang Nano 9K"
-	@echo "  For Tang Nano 20K: make <target> BOARD=20k"
+	@echo "  Default: Tang Nano 20K"
+	@echo "  For Tang Nano 20K: make <target> BOARD=nano_20k"
+	@echo "  For Tang Primer 25K: make <target> BOARD=primer_25k"
 	@echo "  For iCE40 Stick:   make <target> BOARD=ice40"
 	@echo ""
 	@echo "$(GREEN)EXAMPLES:$(NC)"
-	@echo "  make hello_world                # Build for Tang Nano 9K"
-	@echo "  make hello_world BOARD=20k      # Build for Tang Nano 20K"
+	@echo "  make hello_world                # Build for Tang Nano 20K"
+	@echo "  make hello_world BOARD=nano_20k  # Build for Tang Nano 20K"
+	@echo "  make hello_world BOARD=primer_25k # Build for Tang Primer 25K"
 	@echo "  make playground BOARD=ice40     # Build for iCE40 Stick"
 	@echo "  make sim_6502_computer          # Simulate 6502 computer"
 	@echo "  make wave_6502_computer         # View 6502 computer waveforms"
