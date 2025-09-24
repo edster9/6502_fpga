@@ -1,17 +1,28 @@
 # 6502 FPGA Computer
 
-A complete 6502-based computer implementation for the Tang Nano FPGA development board, featuring the proven **Arlet Ottens 6502 CPU core** and comprehensive development environment with simulation-first workflow.
+A complete 6502-based computer implementation for multiple FPGA development boards, featuring the proven **Arlet Ottens 6502 CPU core** and comprehensive development environment with simulation-first workflow.
 
 ## 🎯 Project Highlights
 
+- ✅ **Multi-Board Support**: Tang Nano 20K, Tang Primer 25K, and iCE40 FPGA stick
 - ✅ **Working 6502 CPU**: Cycle-accurate Arlet Ottens implementation verified in simulation
 - ✅ **Complete Toolchain**: OSS CAD Suite with enhanced Makefile and auto-completion
 - ✅ **Professional Workflow**: Git integration, comprehensive testing, waveform analysis
+- ✅ **Playground Projects**: Interactive LED/switch demos for learning FPGA basics
 - 🔄 **Memory System**: RAM/ROM controllers and peripherals (next phase)
 
-## Quick Verification
+## Quick Start
 
 ```bash
+# Build playground project for Tang Nano 20K (default)
+make playground
+
+# Build for Tang Primer 25K (8 switches control 8 LEDs via PMOD)
+make playground BOARD=primer_25k
+
+# Build for iCE40 stick (4 switches control 4 LEDs)
+make playground BOARD=ice40
+
 # Test the 6502 CPU core
 make sim_6502_computer
 
@@ -19,59 +30,99 @@ make sim_6502_computer
 make wave_6502_computer
 ```
 
-**Expected Result**: CPU executes LDA/LDX/LDY/STA/JMP instructions correctly, with memory write confirmation.
+**Expected Results**: 
+- **Playground Projects**: LEDs immediately respond to switch changes - perfect for verifying hardware setup
+- **6502 CPU Simulation**: CPU executes LDA/LDX/LDY/STA/JMP instructions correctly with memory write confirmation
 
 ## Project Structure
 
 ```
 ├── projects/              # Main project directories
-│   ├── hello-world/       # Basic LED Hello World project
-│   └── 6502-computer/     # 6502 CPU Computer implementation
-├── constraints/           # FPGA pin constraints for different boards
-│   ├── tangnano9k.cst     # Tang Nano 9K constraints
-│   └── tangnano20k.cst    # Tang Nano 20K constraints
+│   ├── hello_world/       # Basic LED Hello World project
+│   ├── playground/        # Interactive LED/switch demos for learning
+│   │   ├── src/
+│   │   │   ├── playground_ice40.v      # iCE40 stick (4 switches/LEDs)
+│   │   │   ├── playground_nano_20k.v   # Tang Nano 20K (onboard components)
+│   │   │   └── playground_primer_25k.v # Tang Primer 25K (PMOD 8 switches/LEDs)
+│   │   └── constraints/
+│   │       ├── ice40.pcf               # iCE40 pin constraints
+│   │       ├── nano_20k.cst           # Tang Nano 20K constraints
+│   │       └── primer_25k.cst         # Tang Primer 25K constraints
+│   ├── 6502_computer/     # 6502 CPU Computer implementation
+│   ├── uart/              # UART communication project
+│   ├── simple_cpu/        # Simple CPU example
+│   └── sound/             # Audio generation project
 ├── build/                 # Build outputs (generated)
 ├── tools/                 # OSS CAD Suite and development tools
-└── Makefile               # Comprehensive build system
+└── Makefile               # Comprehensive build system with multi-board support
 ```
 
 ## Hardware Targets
 
-### Tang Nano 9K (Default)
-- **FPGA**: Gowin GW1NR-LV9QN88PC6/I5
-- **Resources**: 8,640 LUT4, 6,480 DFF, 270 BSRAM
-- **Memory**: 256KB external PSRAM
-- **Clock**: 27MHz crystal oscillator
-- **I/O**: RGB LEDs, GPIO pins, HDMI interface
-
-### Tang Nano 20K  
-- **FPGA**: Gowin GW2A-LV18PG256C8/I7
-- **Resources**: 20,736 LUT4, 15,552 DFF, 30 BSRAM
+### Tang Nano 20K (Default)
+- **FPGA**: Gowin GW2A-LV18QN88C8/I7  
+- **Resources**: 20,736 LUT4, 15,552 DFF, 828 BSRAM
 - **Memory**: 64Mbit external PSRAM
 - **Clock**: 27MHz crystal oscillator
-- **I/O**: RGB LEDs, GPIO pins, HDMI interface
+- **I/O**: 2x onboard buttons, RGB LEDs, GPIO pins, HDMI interface
+- **Playground**: 2-switch to 2-LED demo using onboard components
+
+### Tang Primer 25K
+- **FPGA**: Gowin GW5A-LV25MG121NES
+- **Resources**: 23,520 LUT4, 23,520 DFF, 1,152 BSRAM  
+- **Memory**: 256Mbit external PSRAM
+- **Clock**: 50MHz crystal oscillator
+- **I/O**: Extensive GPIO via PMOD connectors
+- **Playground**: 8-switch to 8-LED demo via PMOD1/PMOD2
+
+### iCE40 FPGA Stick
+- **FPGA**: Lattice iCE40-HX1K or iCE40-HX4K
+- **Resources**: 1,280+ LUT4, 1,024+ DFF (varies by model)
+- **Clock**: 12MHz crystal oscillator
+- **I/O**: 4x switches, 4x LEDs, GPIO pins
+- **Playground**: 4-switch to 4-LED direct mapping
+- **Note**: Flash programming supported for permanent deployment
 
 ## Quick Start
 
 ### 1. Setup Development Environment
 ```bash
 # The OSS CAD Suite is already included in tools/oss-cad-suite
-# Just ensure your terminal can run the tools
+# Version: 2025-09-24 (updated from 2025-09-04)
+# All required tools are pre-configured
 ```
 
-### 2. Build Your First Project
+### 2. Start with Playground Projects
 ```bash
-# Build Hello World for Tang Nano 9K
+# Build playground for Tang Nano 20K (default - uses onboard components)
+make playground
+
+# Build playground for Tang Primer 25K (8-switch/8-LED PMOD demo)
+make playground BOARD=primer_25k
+
+# Build playground for iCE40 stick (4-switch/4-LED demo)
+make playground BOARD=ice40
+
+# Program to hardware (SRAM - temporary)
+make prog_playground
+
+# For iCE40: Flash programming (permanent)
+make prog_playground BOARD=ice40  # Actually flashes, survives power cycle
+```
+
+### 3. Build Other Projects
+```bash
+# Build Hello World for Tang Nano 20K
 make hello_world
 
-# Build Hello World for Tang Nano 20K  
-make hello_world BOARD=20k
+# Build Hello World for Tang Primer 25K  
+make hello_world BOARD=primer_25k
 
 # Build and view all available commands
 make help
 ```
 
-### 3. Simulate and Debug
+### 4. Simulate and Debug
 ```bash
 # Run simulation
 make sim_hello_world
@@ -80,21 +131,25 @@ make sim_hello_world
 make wave_hello_world
 ```
 
-### 4. Program the FPGA
-```bash
-# Program the Tang Nano
-make prog_hello_world
-```
-
 ## Complete Command Reference
 
 ### Build Commands
 | Command | Description | Board Support |
 |---------|-------------|---------------|
-| `make hello_world` | Build Hello World LED project | 9K, 20K |
-| `make debug_uart` | Build Debug UART project | 9K, 20K |
-| `make 6502_computer` | Build 6502 Computer project | 9K, 20K |
-| `make simple_cpu` | Build Simple CPU project | 9K, 20K |
+| `make playground` | Build Playground LED/switch project | nano_20k, primer_25k, ice40 |
+| `make hello_world` | Build Hello World LED project | nano_20k, primer_25k |
+| `make debug_uart` | Build Debug UART project | nano_20k, primer_25k |
+| `make 6502_computer` | Build 6502 Computer project | nano_20k, primer_25k |
+| `make simple_cpu` | Build Simple CPU project | nano_20k, primer_25k |
+| `make sound` | Build Sound generation project | nano_20k, primer_25k |
+| `make video` | Build Video output project | nano_20k, primer_25k |
+
+### Board Selection
+| Board Parameter | Hardware | Description |
+|----------------|----------|-------------|
+| `BOARD=nano_20k` | Tang Nano 20K | Default board, onboard components |
+| `BOARD=primer_25k` | Tang Primer 25K | PMOD-based I/O, higher capacity |
+| `BOARD=ice40` | iCE40 FPGA stick | 4 switches/LEDs, flash programming |
 
 ### Simulation Commands
 | Command | Description |
@@ -116,10 +171,13 @@ make prog_hello_world
 ### Programming Commands
 | Command | Description |
 |---------|-------------|
+| `make prog_playground` | Program Playground to FPGA |
 | `make prog_hello_world` | Program Hello World to Tang Nano |
 | `make prog_debug_uart` | Program Debug UART to Tang Nano |
 | `make prog_6502_computer` | Program 6502 Computer to Tang Nano |
 | `make prog_simple_cpu` | Program Simple CPU to Tang Nano |
+
+**Note**: For Tang Nano boards, programming is to SRAM (temporary). For iCE40, programming is to flash (permanent).
 
 ### Utility Commands
 | Command | Description |
@@ -138,19 +196,27 @@ make prog_hello_world
 
 ### Board Selection Examples
 ```bash
-# Build for Tang Nano 9K (default)
-make hello-world
+# Build playground for Tang Nano 20K (default - onboard switches/LEDs)
+make playground
 
-# Build for Tang Nano 20K
-make hello-world BOARD=20k
+# Build playground for Tang Primer 25K (PMOD 8-switch/8-LED demo)
+make playground BOARD=primer_25k
+
+# Build playground for iCE40 stick (4-switch/4-LED demo)  
+make playground BOARD=ice40
+
+# Build other projects for different boards
+make hello_world BOARD=primer_25k
+make 6502_computer BOARD=nano_20k
 
 # Simulate and view waveforms (board-independent)
-make sim-hello-world
-make wave-hello-world
+make sim_6502_computer
+make wave_6502_computer
 
 # Program specific board builds
-make prog-hello-world        # Programs 9K build
-make prog-hello-world BOARD=20k  # Programs 20K build
+make prog_playground                    # Programs nano_20k build (SRAM)
+make prog_playground BOARD=primer_25k   # Programs primer_25k build (SRAM) 
+make prog_playground BOARD=ice40        # Programs ice40 build (Flash - permanent!)
 ```
 
 ### Clean Commands Examples
@@ -178,10 +244,14 @@ make clean && make hello_world
 6. **Test**: Verify hardware functionality
 
 ### Learning Path
-1. **Hello World**: `make hello_world` - Learn basic LED control and FPGA fundamentals
-2. **Debug UART**: `make debug_uart` - Understand serial communication and debugging
-3. **Simple CPU**: `make simple_cpu` - Basic processor concepts and state machines
-4. **6502 Computer**: `make 6502_computer` - Complete retro computer implementation
+1. **Playground**: `make playground` - Start here! Interactive LED/switch control for immediate feedback
+   - Tang Nano 20K: 2 onboard switches control 2 LEDs
+   - Tang Primer 25K: 8 PMOD switches control 8 PMOD LEDs  
+   - iCE40 stick: 4 switches directly control 4 LEDs
+2. **Hello World**: `make hello_world` - Learn LED patterns and timing
+3. **Debug UART**: `make debug_uart` - Understand serial communication and debugging
+4. **Simple CPU**: `make simple_cpu` - Basic processor concepts and state machines
+5. **6502 Computer**: `make 6502_computer` - Complete retro computer implementation
 
 ## Development Tools
 
@@ -197,81 +267,65 @@ The project includes a complete open-source FPGA toolchain in `tools/oss-cad-sui
 
 ## Project Features
 
+### Playground Project Features
+- **Tang Nano 20K**: Uses 2 onboard switches and 2 onboard LEDs for basic input/output learning
+- **Tang Primer 25K**: Features 8-switch to 8-LED mapping via PMOD connectors for advanced I/O
+- **iCE40 FPGA stick**: Direct 4-switch to 4-LED control with flash programming capability
+- **Real-time Response**: Switches immediately control LED states - perfect for learning digital logic
+- **Hardware Verification**: All playground variants tested and working on actual hardware
+
 ### Hello World Project
-- Basic LED control demonstration
-- Clock domain understanding
-- Pin constraint usage
-- Multi-board support
+- **LED Patterns**: Configurable blinking patterns and timing
+- **Clock Domains**: Understanding FPGA clock management  
+- **Multi-board Support**: Automatically adapts to different board LED configurations
+- **Pin Constraints**: Learn proper I/O pin assignment and electrical specifications
 
-### Tutorial Projects
-- **Step 1**: Counter-based LED toggling with precise timing
-- **Step 2**: RGB color cycling using state machines
-- **Step 3**: PWM brightness control with breathing effect
-- **Step 4**: Button input with proper debouncing
-
-### 6502 Computer Project (In Development)
-- Full 6502 CPU implementation
-- Memory management and I/O
-- Cycle-accurate simulation
-- Interactive programming interface
+### Advanced Projects
+- **UART Communication**: Serial debugging and communication protocols
+- **6502 CPU**: Complete 8-bit microprocessor with cycle-accurate simulation
+- **Sound Generation**: Audio synthesis and PWM-based sound output
+- **Video Output**: HDMI/VGA signal generation for display interfaces
 
 ## Build System Details
 
 The Makefile provides:
-- **Automatic dependency tracking**: Source changes trigger rebuilds
-- **Multi-board support**: Single command builds for different targets
-- **Colored output**: Clear visual feedback during builds
-- **Error handling**: Proper error reporting and cleanup
-- **Parallel builds**: Efficient use of build resources
+- **Multi-board Support**: Single command builds for nano_20k, primer_25k, and ice40 boards
+- **Automatic Board Detection**: Intelligent constraint file and source file selection
+- **Comprehensive Help**: `make help` shows all available commands and examples
+- **Colored Output**: Clear visual feedback during builds with status indicators
+- **Error Handling**: Proper error reporting and cleanup on build failures
+- **Dependency Tracking**: Source changes trigger appropriate rebuilds
+- **Organized Structure**: Board-specific source files and constraint files
 
 ## Troubleshooting
 
 ### Common Issues
-- **"Tool not found" errors**: Ensure OSS CAD Suite environment is set up
-- **GTKWave won't open**: Use the proper environment setup sequence
-- **Build failures**: Check source file syntax and constraint file paths
-- **Programming failures**: Verify board connection and driver installation
+- **"Tool not found" errors**: Run `source tools/oss-cad-suite/environment` first
+- **Board not detected**: Check USB connection and driver installation (use Zadig for FTDI)
+- **Build failures**: Verify board selection matches your hardware (`BOARD=nano_20k/primer_25k/ice40`)
+- **Programming failures**: Ensure board is powered and in programming mode
+- **GTKWave won't open**: Use proper environment setup before launching
+
+### Board-Specific Tips
+- **Tang Nano 20K**: Uses SRAM programming (temporary), supports HDMI output
+- **Tang Primer 25K**: Requires PMOD modules for playground project, higher FPGA capacity
+- **iCE40 stick**: Flash programming survives power cycles, limited to smaller designs
 
 ### Getting Help
-- Run `make help` for complete command reference
-- Check build logs in terminal output
-- Verify file paths match project structure
-- Ensure board selection matches your hardware
+- Run `make help` for complete command reference and examples
+- Check `make list-devices` to see connected FPGA boards
+- Verify board selection: `make list-boards` shows supported options
+- Build logs provide detailed error information
 
 ## Contributing
 
-1. Create new projects in `projects/` directory
-2. Add corresponding testbenches in `testbench/`
-3. Update Makefile targets for new projects
-4. Test builds on both Tang Nano 9K and 20K
-5. Document new features in README
-
-```
-0x0000-0x00FF: Zero Page RAM
-0x0100-0x01FF: Stack
-0x0200-0x7FFF: General RAM
-0x8000-0xBFFF: I/O Space
-0xC000-0xFFFF: ROM/Bootloader
-```
-
-## Building
-
-Use VS Code tasks or command line:
-
-```bash
-# Synthesize design
-yosys -p "read_verilog src/top.v; synth_gowin -json build/top.json"
-
-# Place and route
-nextpnr-himbaechel --json build/top.json --write build/top_pnr.json \
-    --device GW1N-LV1QN48C6/I5 --vopt cst=constraints/tangnano.cst
-
-# Generate bitstream
-gowin_pack -d GW1N-LV1QN48C6/I5 -o build/top.fs build/top_pnr.json
-
-# Program FPGA
-openFPGALoader -b tangnano build/top.fs
-```
+1. Create new projects in `projects/<project_name>/` directory
+2. Add board-specific source files: `src/<project>_<board>.v`
+3. Create constraint files: `constraints/<board>.cst` or `constraints/<board>.pcf`
+4. Update Makefile targets for new projects
+5. Test builds on all supported boards
+6. Add simulation testbenches in `testbench/`
+7. Document new features and usage examples
 
 ## License
 
