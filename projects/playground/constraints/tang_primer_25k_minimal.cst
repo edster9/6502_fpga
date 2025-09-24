@@ -1,0 +1,10 @@
+# Minimal test for Tang Primer 25K
+# Using clock and a PMOD2 LED pin for visible testing
+
+# Clock input - 50MHz crystal
+IO_LOC "clk" E2;
+IO_PORT "clk" PULL_MODE=NONE DRIVE=OFF;
+
+# LED output - using PMOD2 LED pin A11
+IO_LOC "led" A11;
+IO_PORT "led" PULL_MODE=NONE DRIVE=8;

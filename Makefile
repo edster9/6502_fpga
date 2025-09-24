@@ -12,6 +12,7 @@
 #   make help                    - Show all available commands
 #   make hello_world             - Build hello_world project for Tang Nano 20K
 #   make hello_world BOARD=9k    - Build hello_world project for Tang Nano 9K
+#   make hello_world BOARD=25k   - Build hello_world project for Tang Primer 25K
 #   make playground BOARD=ice40  - Build playground project for iCE40 stick
 #   make sim_hello_world         - Simulate hello_world project
 #   make wave_hello_world        - View hello_world waveforms in GTKWave
@@ -29,14 +30,22 @@ PROJECTS_DIR := projects
 
 # Function to get project-specific constraint file
 define PROJECT_CONSTRAINTS
-$(if $(filter ice40,$(2)),$(PROJECTS_DIR)/$(1)/constraints/ice40_stick.pcf,$(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst)
+$(if $(filter ice40,$(2)),$(PROJECTS_DIR)/$(1)/constraints/ice40_stick.pcf,$(if $(filter 25k,$(2)),$(PROJECTS_DIR)/$(1)/constraints/tang_primer_$(2).cst,$(PROJECTS_DIR)/$(1)/constraints/tangnano_$(2).cst))
 endef
 
-# Board configuration (default: 20k, can override with BOARD=9k or BOARD=ice40)
+# Board configuration (default: 20k, can override with BOARD=9k, BOARD=25k or BOARD=ice40)
 BOARD ?= 20k
 ifeq ($(BOARD),20k)
     DEVICE := GW2A-LV18QN88C8/I7
     FAMILY := GW2A-18C
+    SYNTH_CMD := synth_gowin
+    PNR_TOOL := nextpnr-himbaechel
+    PACK_TOOL := gowin_pack
+    PROG_BOARD := tangnano
+else ifeq ($(BOARD),25k)
+    DEVICE := GW5A-LV25MG121NES
+    PACK_DEVICE := GW5A-25A
+    FAMILY := GW5A-25A
     SYNTH_CMD := synth_gowin
     PNR_TOOL := nextpnr-himbaechel
     PACK_TOOL := gowin_pack
@@ -188,11 +197,19 @@ $(BUILD_DIR)/playground.bin: $(BUILD_DIR)/playground.asc
 else
 $(BUILD_DIR)/playground_pnr.json: $(BUILD_DIR)/playground.json
 	@echo "$(BLUE)Place & Route for playground...$(NC)"
+ifeq ($(BOARD),25k)
+	$(ENV_SETUP) $(PNR_TOOL) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --vopt sspi_as_gpio --vopt cpu_as_gpio --top playground
+else
 	$(ENV_SETUP) $(PNR_TOOL) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(call PROJECT_CONSTRAINTS,playground,$(BOARD)) --top playground
+endif
 
 $(BUILD_DIR)/playground.fs: $(BUILD_DIR)/playground_pnr.json
 	@echo "$(BLUE)Generating bitstream for playground...$(NC)"
+ifeq ($(BOARD),25k)
+	$(ENV_SETUP) $(PACK_TOOL) --sspi_as_gpio --cpu_as_gpio -d $(PACK_DEVICE) -o $@ $<
+else
 	$(ENV_SETUP) $(PACK_TOOL) -d $(DEVICE) -o $@ $<
+endif
 endif
 
 # Sound Project
