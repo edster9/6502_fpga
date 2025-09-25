@@ -2,7 +2,7 @@
 type = ice40
 
 [build]
-top_module = playground
+top_module = top
 constraint_file = constraints.pcf
 
 [programming]

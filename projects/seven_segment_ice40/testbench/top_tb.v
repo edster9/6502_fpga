@@ -1,22 +1,27 @@
 `timescale 1ns / 1ps
 
-module playground_tb ();
+module top_tb ();
 
   // Testbench signals
   reg tb_clk;
   reg tb_switch_1;
   reg tb_switch_2;
 
+  wire tb_led_1, tb_led_2, tb_led_3, tb_led_4;
   wire tb_segment1_a, tb_segment1_b, tb_segment1_c, tb_segment1_d;
   wire tb_segment1_e, tb_segment1_f, tb_segment1_g;
   wire tb_segment2_a, tb_segment2_b, tb_segment2_c, tb_segment2_d;
   wire tb_segment2_e, tb_segment2_f, tb_segment2_g;
 
   // Instantiate the Unit Under Test (UUT)
-  playground uut (
+  top uut (
       .i_Clk(tb_clk),
       .i_Switch_1(tb_switch_1),
       .i_Switch_2(tb_switch_2),
+      .o_LED_1(tb_led_1),
+      .o_LED_2(tb_led_2),
+      .o_LED_3(tb_led_3),
+      .o_LED_4(tb_led_4),
       .o_Segment1_A(tb_segment1_a),
       .o_Segment1_B(tb_segment1_b),
       .o_Segment1_C(tb_segment1_c),
@@ -122,8 +127,8 @@ module playground_tb ();
 
   // VCD dump for waveform viewing
   initial begin
-    $dumpfile("projects/seven_segment_ice40/playground_tb.vcd");
-    $dumpvars(0, playground_tb);
+    $dumpfile("projects/seven_segment_ice40/build/top_tb.vcd");
+    $dumpvars(0, top_tb);
   end
 
 endmodule

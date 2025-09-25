@@ -35,6 +35,7 @@ Commands:
   flash      Program flash memory (permanent)
   sim        Run simulation with testbench
   wave       Open waveform viewer
+  new        Create a new project with template files (alias for init)
   init       Initialize a new project directory
   help       Show this help message
 
@@ -43,6 +44,7 @@ Examples:
   fpga prog projects/seven_segment_ice40
   fpga flash projects/seven_segment_ice40 --top my_top_module
   fpga sim projects/seven_segment_ice40
+  fpga new projects/my_project --board ice40 --top my_module
   fpga init projects/my_new_project --board ice40
 
 Options:
@@ -180,8 +182,8 @@ detect_top_module() {
     fi
     
     # Look for a module that's not instantiated by others
-    local modules=($(grep -h "^module " "$src_dir"/*.v 2>/dev/null | awk '{print $2}' | sed 's/[^a-zA-Z0-9_].*//'))
-    local instantiated=($(grep -h "^\s*[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(" "$src_dir"/*.v 2>/dev/null | awk '{print $1}'))
+    local modules=($(grep -h "^module " "$src_dir"/*.v "$src_dir"/*.sv 2>/dev/null | awk '{print $2}' | sed 's/[^a-zA-Z0-9_].*//'))
+    local instantiated=($(grep -h "^\s*[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(" "$src_dir"/*.v "$src_dir"/*.sv 2>/dev/null | awk '{print $1}'))
     
     # Find modules that aren't instantiated
     for module in "${modules[@]}"; do
@@ -262,7 +264,7 @@ get_source_files() {
         exit 1
     fi
     
-    find "$src_dir" -name "*.v" -type f
+    find "$src_dir" \( -name "*.v" -o -name "*.sv" \) -type f
 }
 
 # Build command implementation
@@ -304,6 +306,17 @@ cmd_build() {
     log_success "Build completed successfully!"
 }
 
+# Check if any source files are SystemVerilog
+has_systemverilog_files() {
+    local files=("$@")
+    for file in "${files[@]}"; do
+        if [[ "$file" == *.sv ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Build for iCE40 boards
 cmd_build_ice40() {
     local project_dir="$1"
@@ -319,7 +332,12 @@ cmd_build_ice40() {
     
     # Synthesis with Yosys
     log_info "Running synthesis (yosys)..."
-    yosys -p "read_verilog ${source_files[*]}; synth_ice40 -top $top_module -json $json_file" \
+    local read_cmd="read_verilog"
+    if has_systemverilog_files "${source_files[@]}"; then
+        read_cmd="read_verilog -sv"
+        log_info "SystemVerilog files detected, using -sv flag"
+    fi
+    yosys -p "$read_cmd ${source_files[*]}; synth_ice40 -top $top_module -json $json_file" \
         || { log_error "Synthesis failed"; exit 1; }
     
     # Place & Route with nextpnr
@@ -351,7 +369,12 @@ cmd_build_gowin() {
     
     # Synthesis with Yosys
     log_info "Running synthesis (yosys)..."
-    yosys -p "read_verilog ${source_files[*]}; synth_gowin -top $top_module -json $json_file" \
+    local read_cmd="read_verilog"
+    if has_systemverilog_files "${source_files[@]}"; then
+        read_cmd="read_verilog -sv"
+        log_info "SystemVerilog files detected, using -sv flag"
+    fi
+    yosys -p "$read_cmd ${source_files[*]}; synth_gowin -top $top_module -json $json_file" \
         || { log_error "Synthesis failed"; exit 1; }
     
     # Place & Route with nextpnr
@@ -460,7 +483,39 @@ cmd_flash() {
 # Initialize a new project
 cmd_init() {
     local project_dir="$1"
-    local board_type="${2:-ice40}"
+    local board_type="ice40"
+    local top_module="top"
+    
+    # Parse options for init/new command
+    shift # Remove project_dir from args
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --board=*)
+                board_type="${1#--board=}"
+                shift
+                ;;
+            --board)
+                board_type="$2"
+                shift 2
+                ;;
+            --top=*)
+                top_module="${1#--top=}"
+                shift
+                ;;
+            --top)
+                top_module="$2"
+                shift 2
+                ;;
+            --help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option for init/new: $1"
+                exit 1
+                ;;
+        esac
+    done
     
     if [[ -d "$project_dir" ]]; then
         log_error "Project directory already exists: $project_dir"
@@ -469,6 +524,7 @@ cmd_init() {
     
     log_info "Initializing new project: $project_dir"
     log_info "Board type: $board_type"
+    log_info "Top module: $top_module"
     
     mkdir -p "$project_dir/src"
     mkdir -p "$project_dir/testbench"
@@ -480,61 +536,87 @@ cmd_init() {
 type = $board_type
 
 [build]
-top_module = top
-constraint_file = constraints.pcf
+top_module = $top_module
+constraint_file = 
 EOF
-    
-    # Create template files based on board type
-    case "$board_type" in
-        ice40)
-            cat > "$project_dir/constraints.pcf" << 'EOF'
-# iCE40 Pin Constraints
-set_io i_Clk 1
-set_io i_Switch_1 16
-set_io o_LED_1 99
-EOF
-            ;;
-        nano_20k|nano20k)
-            cat > "$project_dir/tangnano_20k.cst" << 'EOF'
-IO_LOC "i_Clk" 4;
-IO_PORT "i_Clk" PULL_MODE=UP;
-IO_LOC "i_Switch_1" 3;
-IO_PORT "i_Switch_1" PULL_MODE=UP;
-IO_LOC "o_LED_1" 15;
-IO_PORT "o_LED_1" DRIVE=8 PULL_MODE=UP;
-EOF
-            ;;
-    esac
     
     # Create template top module
-    cat > "$project_dir/src/top.v" << 'EOF'
-module top(
-    input i_Clk,
-    input i_Switch_1,
-    output o_LED_1
+    cat > "$project_dir/src/${top_module}.v" << EOF
+// ${top_module} - Generated by FPGA Build System
+// Board: $board_type
+
+module $top_module (
+    input i_Clk
+    // Add your ports here
 );
 
-// Simple LED toggle example
-reg r_LED = 1'b0;
-reg [24:0] r_Counter = 0;
-
-always @(posedge i_Clk) begin
-    r_Counter <= r_Counter + 1;
-    if (r_Counter == 0) begin
-        r_LED <= ~r_LED;
-    end
-end
-
-assign o_LED_1 = r_LED;
+    // Add your logic here
 
 endmodule
 EOF
     
+    # Create template testbench
+    cat > "$project_dir/testbench/${top_module}_tb.v" << EOF
+\`timescale 1ns / 1ps
+
+// Testbench for $top_module
+module ${top_module}_tb ();
+
+    // Testbench signals
+    reg tb_clk;
+    
+    // Clock period (adjust based on your board)
+    parameter CLK_PERIOD = 83.33; // 12MHz = 83.33ns period
+    
+    // Instantiate the Unit Under Test (UUT)
+    $top_module uut (
+        .i_Clk(tb_clk)
+        // Connect your ports here
+    );
+    
+    // Clock generation
+    always begin
+        tb_clk = 1'b0;
+        #(CLK_PERIOD/2);
+        tb_clk = 1'b1;
+        #(CLK_PERIOD/2);
+    end
+    
+    // Test sequence
+    initial begin
+        // Wait for reset
+        #(CLK_PERIOD * 10);
+        
+        \$display("Starting $top_module testbench...");
+        
+        // Add your test logic here
+        
+        \$display("Testbench completed!");
+        \$finish;
+    end
+    
+    // VCD dump for waveform viewing
+    initial begin
+        \$dumpfile("$project_dir/build/${top_module}_tb.vcd");
+        \$dumpvars(0, ${top_module}_tb);
+    end
+    
+endmodule
+EOF
+    
     log_success "Project initialized at: $project_dir"
+    log_info "Files created:"
+    log_info "  ├── src/${top_module}.v           (Top module)"
+    log_info "  ├── testbench/${top_module}_tb.v  (Testbench)"
+    log_info "  └── .fpga.project             (Project config)"
+    log_info ""
     log_info "Next steps:"
-    log_info "  1. Edit $project_dir/src/top.v"
-    log_info "  2. Run: fpga build $project_dir"
-    log_info "  3. Run: fpga prog $project_dir"
+    log_info "  1. Edit src/${top_module}.v for your design"
+    log_info "  2. Edit testbench/${top_module}_tb.v for your tests"
+    log_info "  3. Add constraint file when ready"
+    log_info "  4. Run: fpga build $project_dir"
+    log_info "  5. Run: fpga sim $project_dir"
+    log_info "  6. Run: fpga prog $project_dir"
 }
 
 # Simulate project
@@ -573,17 +655,17 @@ cmd_sim() {
     mkdir -p "$build_dir"
     
     # Find source files
-    local src_files=$(find "$project_dir/src" -name "*.v" 2>/dev/null | sort)
+    local src_files=$(find "$project_dir/src" \( -name "*.v" -o -name "*.sv" \) 2>/dev/null | sort)
     if [[ -z "$src_files" ]]; then
-        log_error "No Verilog source files found in $project_dir/src"
+        log_error "No Verilog/SystemVerilog source files found in $project_dir/src"
         exit 1
     fi
     
     # Find testbench files
-    local tb_files=$(find "$project_dir/testbench" -name "*_tb.v" -o -name "*tb.v" 2>/dev/null | sort)
+    local tb_files=$(find "$project_dir/testbench" \( -name "*_tb.v" -o -name "*tb.v" -o -name "*_tb.sv" -o -name "*tb.sv" \) 2>/dev/null | sort)
     if [[ -z "$tb_files" ]]; then
         log_error "No testbench files found in $project_dir/testbench"
-        log_error "Expected files matching patterns: *_tb.v or *tb.v"
+        log_error "Expected files matching patterns: *_tb.v, *tb.v, *_tb.sv, or *tb.sv"
         exit 1
     fi
     
@@ -684,31 +766,16 @@ main() {
         exit 0
     fi
     
-    # Handle init command (doesn't need workspace config)
-    if [[ "$command" == "init" ]]; then
+    # Handle init/new command (doesn't need workspace config)
+    if [[ "$command" == "init" || "$command" == "new" ]]; then
         if [[ $# -eq 0 ]]; then
-            log_error "Project directory required for init command"
+            log_error "Project directory required for $command command"
             exit 1
         fi
         local project_dir="$1"
-        local board_type="ice40"
         shift
         
-        # Parse board type option
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --board)
-                    board_type="$2"
-                    shift 2
-                    ;;
-                *)
-                    log_error "Unknown option: $1"
-                    exit 1
-                    ;;
-            esac
-        done
-        
-        cmd_init "$project_dir" "$board_type"
+        cmd_init "$project_dir" "$@"
         exit 0
     fi
     

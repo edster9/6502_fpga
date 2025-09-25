@@ -8,8 +8,8 @@
 // Output o_Switch is the debounced version of i_Switch
 // Set the DEBOUNCE_LIMIT in i_Clk clock ticks to ensure signal is steady.
 ///////////////////////////////////////////////////////////////////////////////
-module Debounce_Single_Input #(
-    parameter DEBOUNCE_LIMIT = 250000
+module debounce_single_input #(
+    parameter integer DEBOUNCE_LIMIT = 250000
 ) (
     input  i_Clk,
     input  i_Switch,
