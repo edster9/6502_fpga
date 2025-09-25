@@ -189,7 +189,7 @@ endif
 $(BUILD_DIR)/playground.json: $(PLAYGROUND_SRC) | $(BUILD_DIR)
 	@echo "$(BLUE)Synthesizing playground for $(BOARD)...$(NC)"
 ifeq ($(BOARD),ice40)
-	$(ENV_SETUP) yosys -p "read_verilog $<; $(SYNTH_CMD) -top playground -json $@"
+	$(ENV_SETUP) yosys -p "read_verilog $(PROJECTS_DIR)/playground/src/debounce.v $(PROJECTS_DIR)/playground/src/binary_to_7segment.v $<; $(SYNTH_CMD) -top playground -json $@"
 else
 	$(ENV_SETUP) yosys -p "read_verilog $<; $(SYNTH_CMD) -json $@"
 endif
