@@ -1,6 +1,0 @@
-[board]
-type = nano_20k
-
-[build]
-top_module = cpu_core
-constraint_file = 
