@@ -1,0 +1,13 @@
+[toolchain]
+# Path to OSS CAD Suite installation
+oss_cad_suite_path = /c/Users/edste/Projects/fpga_toolchain/oss-cad-suite
+
+[workspace]
+# Workspace-level settings
+name = 6502_FPGA_Development
+version = 1.0
+
+[defaults]
+# Default settings for new projects
+default_board = ice40
+build_dir = build

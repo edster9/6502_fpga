@@ -1,0 +1,22 @@
+# Verible Format Configuration
+# Configuration for verilog_format (part of Verible suite)
+
+# Indentation settings
+--indentation_spaces=2
+--wrap_spaces=2
+
+# Alignment options
+--assignment_statement_alignment=infer
+--case_items_alignment=infer
+--class_member_variables_alignment=infer
+--formal_parameters_alignment=infer
+--named_parameter_alignment=infer
+--named_port_alignment=infer
+--port_declarations_alignment=infer
+--struct_union_members_alignment=infer
+
+# Line wrapping
+--try_wrap_long_lines=true
+
+# Spacing settings - should preserve operators like !==
+--preserve_formatting=false

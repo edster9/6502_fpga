@@ -1,0 +1,10 @@
+[board]
+type = ice40
+
+[build]
+top_module = playground
+constraint_file = constraints.pcf
+
+[programming]
+# Programming options
+flash_by_default = false

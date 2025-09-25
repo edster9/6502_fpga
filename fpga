@@ -1,0 +1,795 @@
+#!/bin/bash
+# FPGA Build System - Master Script
+# Usage: fpga [build|prog|flash|sim|wave] [project_dir] [additional options]
+
+set -e  # Exit on any error
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$SCRIPT_DIR"
+WORKSPACE_FILE="$WORKSPACE_ROOT/.fpga.workspace"
+VERSION="1.0.0"
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+# Show usage information
+show_usage() {
+    cat << EOF
+FPGA Build System v${VERSION}
+
+Usage: fpga [COMMAND] [PROJECT_DIR] [OPTIONS]
+
+Commands:
+  build      Synthesize, place & route, and generate bitstream
+  prog       Program FPGA (temporary, lost on power cycle) 
+  flash      Program flash memory (permanent)
+  sim        Run simulation with testbench
+  wave       Open waveform viewer
+  init       Initialize a new project directory
+  help       Show this help message
+
+Examples:
+  fpga build projects/seven_segment_ice40
+  fpga prog projects/seven_segment_ice40
+  fpga flash projects/seven_segment_ice40 --top my_top_module
+  fpga sim projects/seven_segment_ice40
+  fpga init projects/my_new_project --board ice40
+
+Options:
+  --board BOARD        Override board type (ice40, nano_20k, primer_25k)
+  --top MODULE         Override top module name
+  --constraint FILE    Override constraint file
+  --verbose           Enable verbose output
+  --help              Show this help message
+
+EOF
+}
+
+# Parse INI file function
+parse_ini() {
+    local file="$1"
+    local section="$2"
+    local key="$3"
+    
+    if [[ ! -f "$file" ]]; then
+        return 1
+    fi
+    
+    # Extract value from INI file
+    awk -F= -v section="[$section]" -v key="$key" '
+        # Remove comments and trim whitespace from the line
+        { gsub(/#.*/, ""); gsub(/^[ \t]+|[ \t]+$/, "") }
+        
+        # Skip empty lines
+        /^$/ { next }
+        
+        # Check for section header
+        $0 == section { in_section = 1; next }
+        /^\[/ && in_section { in_section = 0; next }
+        
+        # Process key-value pairs in the current section
+        in_section && /=/ {
+            # Trim whitespace from key and value
+            gsub(/^[ \t]+|[ \t]+$/, "", $1)
+            gsub(/^[ \t]+|[ \t]+$/, "", $2)
+            
+            if ($1 == key) {
+                print $2
+                exit
+            }
+        }
+    ' "$file"
+}
+
+# Load workspace configuration
+load_workspace_config() {
+    if [[ ! -f "$WORKSPACE_FILE" ]]; then
+        log_error "Workspace configuration file not found: $WORKSPACE_FILE"
+        log_error "Please create a .workspace file in the project root."
+        log_error "Example:"
+        log_error "  [toolchain]"
+        log_error "  oss_cad_suite_path = /c/Users/edste/Projects/fpga_toolchain/oss-cad-suite"
+        exit 1
+    fi
+    
+    TOOLCHAIN_PATH=$(parse_ini "$WORKSPACE_FILE" "toolchain" "oss_cad_suite_path")
+    if [[ -z "$TOOLCHAIN_PATH" ]]; then
+        log_error "Missing toolchain path in $WORKSPACE_FILE"
+        exit 1
+    fi
+    
+    if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
+        log_error "Toolchain directory not found: $TOOLCHAIN_PATH"
+        exit 1
+    fi
+    
+    log_info "Using toolchain: $TOOLCHAIN_PATH"
+}
+
+# Load project configuration
+load_project_config() {
+    local project_dir="$1"
+    local fpga_file="$project_dir/.fpga.project"
+    
+    if [[ ! -f "$fpga_file" ]]; then
+        log_error "Project configuration file not found: $fpga_file"
+        log_error "Please create a .fpga.project file in the project directory."
+        log_error "Example:"
+        log_error "  [board]"
+        log_error "  type = ice40"
+        log_error "  [build]"
+        log_error "  top_module = top"
+        log_error "  constraint_file = constraints.pcf"
+        exit 1
+    fi
+    
+    BOARD_TYPE=$(parse_ini "$fpga_file" "board" "type")
+    TOP_MODULE=$(parse_ini "$fpga_file" "build" "top_module")
+    CONSTRAINT_FILE=$(parse_ini "$fpga_file" "build" "constraint_file")
+    
+    if [[ -z "$BOARD_TYPE" ]]; then
+        log_error "Missing board type in $fpga_file"
+        exit 1
+    fi
+    
+    log_info "Board type: $BOARD_TYPE"
+    log_info "Top module: ${TOP_MODULE:-auto-detect}"
+    log_info "Constraint file: ${CONSTRAINT_FILE:-auto-detect}"
+}
+
+# Set up toolchain environment
+setup_environment() {
+    if [[ ! -f "$TOOLCHAIN_PATH/bin/yosys" && ! -f "$TOOLCHAIN_PATH/bin/yosys.exe" ]]; then
+        log_error "Yosys not found in toolchain directory"
+        exit 1
+    fi
+    
+    # Set up environment similar to run_with_env.sh
+    export YOSYSHQ_ROOT="$TOOLCHAIN_PATH"
+    export SSL_CERT_FILE="$TOOLCHAIN_PATH/etc/cacert.pem"
+    export PATH="$TOOLCHAIN_PATH/bin:$TOOLCHAIN_PATH/lib:$PATH"
+    export PYTHON_EXECUTABLE="$TOOLCHAIN_PATH/lib/python3.exe"
+    export QT_PLUGIN_PATH="$TOOLCHAIN_PATH/lib/qt5/plugins"
+    export QT_LOGGING_RULES="*=false"
+    export GTK_EXE_PREFIX="$TOOLCHAIN_PATH"
+    export GTK_DATA_PREFIX="$TOOLCHAIN_PATH"
+    export GDK_PIXBUF_MODULEDIR="$TOOLCHAIN_PATH/lib/gdk-pixbuf-2.0/2.10.0/loaders"
+    export GDK_PIXBUF_MODULE_FILE="$TOOLCHAIN_PATH/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+    
+    log_info "Environment configured for OSS CAD Suite"
+}
+
+# Auto-detect top module from Verilog files
+detect_top_module() {
+    local project_dir="$1"
+    local src_dir="$project_dir/src"
+    
+    if [[ -n "$TOP_MODULE" ]]; then
+        echo "$TOP_MODULE"
+        return
+    fi
+    
+    # Look for a module that's not instantiated by others
+    local modules=($(grep -h "^module " "$src_dir"/*.v 2>/dev/null | awk '{print $2}' | sed 's/[^a-zA-Z0-9_].*//'))
+    local instantiated=($(grep -h "^\s*[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(" "$src_dir"/*.v 2>/dev/null | awk '{print $1}'))
+    
+    # Find modules that aren't instantiated
+    for module in "${modules[@]}"; do
+        local is_instantiated=false
+        for inst in "${instantiated[@]}"; do
+            if [[ "$module" == "$inst" ]]; then
+                is_instantiated=true
+                break
+            fi
+        done
+        if [[ "$is_instantiated" == false ]]; then
+            echo "$module"
+            return
+        fi
+    done
+    
+    # Fallback to first module found
+    if [[ ${#modules[@]} -gt 0 ]]; then
+        echo "${modules[0]}"
+        return
+    fi
+    
+    log_error "No top module found in $src_dir"
+    exit 1
+}
+
+# Auto-detect constraint file
+detect_constraint_file() {
+    local project_dir="$1"
+    
+    if [[ -n "$CONSTRAINT_FILE" ]]; then
+        echo "$project_dir/$CONSTRAINT_FILE"
+        return
+    fi
+    
+    # Look for constraint files based on board type
+    case "$BOARD_TYPE" in
+        ice40)
+            if [[ -f "$project_dir/constraints.pcf" ]]; then
+                echo "$project_dir/constraints.pcf"
+            elif [[ -f "$project_dir/ice40.pcf" ]]; then
+                echo "$project_dir/ice40.pcf"
+            else
+                log_error "No constraint file found for ice40 board"
+                exit 1
+            fi
+            ;;
+        nano_20k|nano20k)
+            if [[ -f "$project_dir/tangnano_20k.cst" ]]; then
+                echo "$project_dir/tangnano_20k.cst"
+            else
+                log_error "No constraint file found for Tang Nano 20K"
+                exit 1
+            fi
+            ;;
+        primer_25k|primer25k)
+            if [[ -f "$project_dir/tangprimer_25k.cst" ]]; then
+                echo "$project_dir/tangprimer_25k.cst"
+            else
+                log_error "No constraint file found for Tang Primer 25K"
+                exit 1
+            fi
+            ;;
+        *)
+            log_error "Unknown board type: $BOARD_TYPE"
+            exit 1
+            ;;
+    esac
+}
+
+# Get all Verilog source files
+get_source_files() {
+    local project_dir="$1"
+    local src_dir="$project_dir/src"
+    
+    if [[ ! -d "$src_dir" ]]; then
+        log_error "Source directory not found: $src_dir"
+        exit 1
+    fi
+    
+    find "$src_dir" -name "*.v" -type f
+}
+
+# Build command implementation
+cmd_build() {
+    local project_dir="$1"
+    local build_dir="$project_dir/build"
+    local top_module=$(detect_top_module "$project_dir")
+    local constraint_file=$(detect_constraint_file "$project_dir")
+    local source_files=($(get_source_files "$project_dir"))
+    
+    if [[ ${#source_files[@]} -eq 0 ]]; then
+        log_error "No Verilog source files found in $project_dir/src"
+        exit 1
+    fi
+    
+    log_info "Building project: $project_dir"
+    log_info "Top module: $top_module"
+    log_info "Constraint file: $constraint_file"
+    log_info "Source files: ${#source_files[@]} files"
+    
+    mkdir -p "$build_dir"
+    
+    case "$BOARD_TYPE" in
+        ice40)
+            cmd_build_ice40 "$project_dir" "$build_dir" "$top_module" "$constraint_file" "${source_files[@]}"
+            ;;
+        nano_20k|nano20k)
+            cmd_build_gowin "$project_dir" "$build_dir" "$top_module" "$constraint_file" "GW2A-LV18QN88C8/I7" "${source_files[@]}"
+            ;;
+        primer_25k|primer25k)
+            cmd_build_gowin "$project_dir" "$build_dir" "$top_module" "$constraint_file" "GW5A-LV25MG121NES" "${source_files[@]}"
+            ;;
+        *)
+            log_error "Unsupported board type: $BOARD_TYPE"
+            exit 1
+            ;;
+    esac
+    
+    log_success "Build completed successfully!"
+}
+
+# Build for iCE40 boards
+cmd_build_ice40() {
+    local project_dir="$1"
+    local build_dir="$2"
+    local top_module="$3"
+    local constraint_file="$4"
+    shift 4
+    local source_files=("$@")
+    
+    local json_file="$build_dir/${top_module}.json"
+    local asc_file="$build_dir/${top_module}.asc"
+    local bin_file="$build_dir/${top_module}.bin"
+    
+    # Synthesis with Yosys
+    log_info "Running synthesis (yosys)..."
+    yosys -p "read_verilog ${source_files[*]}; synth_ice40 -top $top_module -json $json_file" \
+        || { log_error "Synthesis failed"; exit 1; }
+    
+    # Place & Route with nextpnr
+    log_info "Running place & route (nextpnr-ice40)..."
+    nextpnr-ice40 --hx1k --package vq100 --json "$json_file" --pcf "$constraint_file" --asc "$asc_file" \
+        || { log_error "Place & route failed"; exit 1; }
+    
+    # Generate bitstream
+    log_info "Generating bitstream (icepack)..."
+    icepack "$asc_file" "$bin_file" \
+        || { log_error "Bitstream generation failed"; exit 1; }
+    
+    log_success "iCE40 build completed: $bin_file"
+}
+
+# Build for Gowin boards (Tang Nano 20K, Tang Primer 25K)
+cmd_build_gowin() {
+    local project_dir="$1"
+    local build_dir="$2"
+    local top_module="$3"
+    local constraint_file="$4"
+    local device="$5"
+    shift 5
+    local source_files=("$@")
+    
+    local json_file="$build_dir/${top_module}.json"
+    local pnr_file="$build_dir/${top_module}_pnr.json"
+    local fs_file="$build_dir/${top_module}.fs"
+    
+    # Synthesis with Yosys
+    log_info "Running synthesis (yosys)..."
+    yosys -p "read_verilog ${source_files[*]}; synth_gowin -top $top_module -json $json_file" \
+        || { log_error "Synthesis failed"; exit 1; }
+    
+    # Place & Route with nextpnr
+    log_info "Running place & route (nextpnr-himbaechel)..."
+    nextpnr-himbaechel --json "$json_file" --write "$pnr_file" --device "$device" --vopt cst="$constraint_file" \
+        || { log_error "Place & route failed"; exit 1; }
+    
+    # Generate bitstream
+    log_info "Generating bitstream (gowin_pack)..."
+    gowin_pack -d "$device" -o "$fs_file" "$pnr_file" \
+        || { log_error "Bitstream generation failed"; exit 1; }
+    
+    log_success "Gowin build completed: $fs_file"
+}
+
+# Programming command implementation
+cmd_prog() {
+    local project_dir="$1"
+    local build_dir="$project_dir/build"
+    local top_module=$(detect_top_module "$project_dir")
+    
+    log_info "Programming FPGA (temporary)..."
+    
+    case "$BOARD_TYPE" in
+        ice40)
+            local bin_file="$build_dir/${top_module}.bin"
+            if [[ ! -f "$bin_file" ]]; then
+                log_error "Bitstream file not found: $bin_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            iceprog "$bin_file" || { log_error "Programming failed"; exit 1; }
+            ;;
+        nano_20k|nano20k)
+            local fs_file="$build_dir/${top_module}.fs"
+            if [[ ! -f "$fs_file" ]]; then
+                log_error "Bitstream file not found: $fs_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            openFPGALoader -b tangnano20k "$fs_file" || { log_error "Programming failed"; exit 1; }
+            ;;
+        primer_25k|primer25k)
+            local fs_file="$build_dir/${top_module}.fs"
+            if [[ ! -f "$fs_file" ]]; then
+                log_error "Bitstream file not found: $fs_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            openFPGALoader -b tangprimer25k "$fs_file" || { log_error "Programming failed"; exit 1; }
+            ;;
+        *)
+            log_error "Programming not supported for board type: $BOARD_TYPE"
+            exit 1
+            ;;
+    esac
+    
+    log_success "Programming completed successfully!"
+}
+
+# Flash command implementation
+cmd_flash() {
+    local project_dir="$1"
+    local build_dir="$project_dir/build"
+    local top_module=$(detect_top_module "$project_dir")
+    
+    log_info "Programming flash memory (permanent)..."
+    
+    case "$BOARD_TYPE" in
+        ice40)
+            local bin_file="$build_dir/${top_module}.bin"
+            if [[ ! -f "$bin_file" ]]; then
+                log_error "Bitstream file not found: $bin_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            iceprog -S "$bin_file" || { log_error "Flash programming failed"; exit 1; }
+            ;;
+        nano_20k|nano20k)
+            local fs_file="$build_dir/${top_module}.fs"
+            if [[ ! -f "$fs_file" ]]; then
+                log_error "Bitstream file not found: $fs_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            openFPGALoader -b tangnano20k -f "$fs_file" || { log_error "Flash programming failed"; exit 1; }
+            ;;
+        primer_25k|primer25k)
+            local fs_file="$build_dir/${top_module}.fs"
+            if [[ ! -f "$fs_file" ]]; then
+                log_error "Bitstream file not found: $fs_file"
+                log_error "Run 'fpga build $project_dir' first"
+                exit 1
+            fi
+            openFPGALoader -b tangprimer25k -f "$fs_file" || { log_error "Flash programming failed"; exit 1; }
+            ;;
+        *)
+            log_error "Flash programming not supported for board type: $BOARD_TYPE"
+            exit 1
+            ;;
+    esac
+    
+    log_success "Flash programming completed successfully!"
+}
+
+# Initialize a new project
+cmd_init() {
+    local project_dir="$1"
+    local board_type="${2:-ice40}"
+    
+    if [[ -d "$project_dir" ]]; then
+        log_error "Project directory already exists: $project_dir"
+        exit 1
+    fi
+    
+    log_info "Initializing new project: $project_dir"
+    log_info "Board type: $board_type"
+    
+    mkdir -p "$project_dir/src"
+    mkdir -p "$project_dir/testbench"
+    mkdir -p "$project_dir/build"
+    
+    # Create .fpga.project configuration file
+    cat > "$project_dir/.fpga.project" << EOF
+[board]
+type = $board_type
+
+[build]
+top_module = top
+constraint_file = constraints.pcf
+EOF
+    
+    # Create template files based on board type
+    case "$board_type" in
+        ice40)
+            cat > "$project_dir/constraints.pcf" << 'EOF'
+# iCE40 Pin Constraints
+set_io i_Clk 1
+set_io i_Switch_1 16
+set_io o_LED_1 99
+EOF
+            ;;
+        nano_20k|nano20k)
+            cat > "$project_dir/tangnano_20k.cst" << 'EOF'
+IO_LOC "i_Clk" 4;
+IO_PORT "i_Clk" PULL_MODE=UP;
+IO_LOC "i_Switch_1" 3;
+IO_PORT "i_Switch_1" PULL_MODE=UP;
+IO_LOC "o_LED_1" 15;
+IO_PORT "o_LED_1" DRIVE=8 PULL_MODE=UP;
+EOF
+            ;;
+    esac
+    
+    # Create template top module
+    cat > "$project_dir/src/top.v" << 'EOF'
+module top(
+    input i_Clk,
+    input i_Switch_1,
+    output o_LED_1
+);
+
+// Simple LED toggle example
+reg r_LED = 1'b0;
+reg [24:0] r_Counter = 0;
+
+always @(posedge i_Clk) begin
+    r_Counter <= r_Counter + 1;
+    if (r_Counter == 0) begin
+        r_LED <= ~r_LED;
+    end
+end
+
+assign o_LED_1 = r_LED;
+
+endmodule
+EOF
+    
+    log_success "Project initialized at: $project_dir"
+    log_info "Next steps:"
+    log_info "  1. Edit $project_dir/src/top.v"
+    log_info "  2. Run: fpga build $project_dir"
+    log_info "  3. Run: fpga prog $project_dir"
+}
+
+# Simulate project
+cmd_sim() {
+    local project_dir="$1"
+    
+    if [[ ! -d "$project_dir" ]]; then
+        log_error "Project directory does not exist: $project_dir"
+        exit 1
+    fi
+    
+    # Load project configuration
+    local project_config="$project_dir/.fpga.project"
+    if [[ ! -f "$project_config" ]]; then
+        log_error "Project configuration not found: $project_config"
+        exit 1
+    fi
+    
+    local board_type=$(parse_ini "$project_config" "board" "type")
+    local top_module=$(parse_ini "$project_config" "build" "top_module")
+    
+    if [[ -z "$board_type" ]]; then
+        log_error "Board type not found in project configuration"
+        exit 1
+    fi
+    
+    if [[ -z "$top_module" ]]; then
+        top_module="top"
+    fi
+    
+    log_info "Board type: $board_type"
+    log_info "Top module: $top_module"
+    log_info "Simulating project: $project_dir"
+    
+    local build_dir="$project_dir/build"
+    mkdir -p "$build_dir"
+    
+    # Find source files
+    local src_files=$(find "$project_dir/src" -name "*.v" 2>/dev/null | sort)
+    if [[ -z "$src_files" ]]; then
+        log_error "No Verilog source files found in $project_dir/src"
+        exit 1
+    fi
+    
+    # Find testbench files
+    local tb_files=$(find "$project_dir/testbench" -name "*_tb.v" -o -name "*tb.v" 2>/dev/null | sort)
+    if [[ -z "$tb_files" ]]; then
+        log_error "No testbench files found in $project_dir/testbench"
+        log_error "Expected files matching patterns: *_tb.v or *tb.v"
+        exit 1
+    fi
+    
+    local src_count=$(echo "$src_files" | wc -l)
+    local tb_count=$(echo "$tb_files" | wc -l)
+    log_info "Source files: $src_count files"
+    log_info "Testbench files: $tb_count files"
+    
+    # Use the first testbench as the top module for simulation
+    local tb_top=$(basename "${tb_files%% *}" .v)
+    local sim_file="$build_dir/${tb_top}"
+    
+    log_info "Running simulation with Icarus Verilog..."
+    log_info "Testbench: $tb_top"
+    
+    # Compile with iverilog
+    if ! iverilog -o "$sim_file" -g2005-sv $tb_files $src_files; then
+        log_error "Simulation compilation failed"
+        exit 1
+    fi
+    
+    # Run simulation with vvp
+    log_info "Running simulation..."
+    if ! vvp "$sim_file"; then
+        log_error "Simulation execution failed"
+        exit 1
+    fi
+    
+    log_success "Simulation completed successfully!"
+    
+    # Check if VCD file was generated
+    local vcd_file="$project_dir/${tb_top}.vcd"
+    if [[ -f "$vcd_file" ]]; then
+        log_info "VCD waveform file generated: $vcd_file"
+        log_info "Use 'fpga wave $project_dir' to view waveforms"
+    fi
+}
+
+# Open waveform viewer
+cmd_wave() {
+    local project_dir="$1"
+    
+    if [[ ! -d "$project_dir" ]]; then
+        log_error "Project directory does not exist: $project_dir"
+        exit 1
+    fi
+    
+    # Look for VCD files
+    local vcd_files=$(find "$project_dir" -name "*.vcd" 2>/dev/null | sort)
+    
+    if [[ -z "$vcd_files" ]]; then
+        log_error "No VCD files found in $project_dir"
+        log_error "Run 'fpga sim $project_dir' first to generate waveforms"
+        exit 1
+    fi
+    
+    # Use the first VCD file found
+    local vcd_file=$(echo "$vcd_files" | head -n1)
+    
+    log_info "Opening waveform viewer for: $vcd_file"
+    
+    # Check if GTKWave is available
+    if ! command -v gtkwave &> /dev/null; then
+        log_error "GTKWave not found in toolchain"
+        log_error "Please ensure GTKWave is installed in the OSS CAD Suite"
+        exit 1
+    fi
+    
+    # Launch GTKWave using the same method as the working Makefile
+    log_info "Launching GTKWave..."
+    
+    # Use the same command structure as the Makefile: eval $(./run_with_env.sh) && gtkwave file.vcd
+    eval $(./run_with_env.sh) && gtkwave "$vcd_file" &
+    local gtkwave_pid=$!
+    
+    if [[ $gtkwave_pid -gt 0 ]]; then
+        log_success "GTKWave started with PID: $gtkwave_pid"
+        log_success "Waveform file: $vcd_file"
+    else
+        log_error "Failed to launch GTKWave"
+        log_info "VCD file available at: $vcd_file"
+    fi
+}
+
+# Main script logic
+main() {
+    if [[ $# -eq 0 ]]; then
+        show_usage
+        exit 0
+    fi
+    
+    local command="$1"
+    shift
+    
+    # Handle help command
+    if [[ "$command" == "help" ]] || [[ "$command" == "--help" ]]; then
+        show_usage
+        exit 0
+    fi
+    
+    # Handle init command (doesn't need workspace config)
+    if [[ "$command" == "init" ]]; then
+        if [[ $# -eq 0 ]]; then
+            log_error "Project directory required for init command"
+            exit 1
+        fi
+        local project_dir="$1"
+        local board_type="ice40"
+        shift
+        
+        # Parse board type option
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --board)
+                    board_type="$2"
+                    shift 2
+                    ;;
+                *)
+                    log_error "Unknown option: $1"
+                    exit 1
+                    ;;
+            esac
+        done
+        
+        cmd_init "$project_dir" "$board_type"
+        exit 0
+    fi
+    
+    # Load workspace configuration
+    load_workspace_config
+    
+    # Set up toolchain environment
+    setup_environment
+    
+    # Get project directory
+    if [[ $# -eq 0 ]]; then
+        log_error "Project directory required"
+        show_usage
+        exit 1
+    fi
+    
+    local project_dir="$1"
+    shift
+    
+    if [[ ! -d "$project_dir" ]]; then
+        log_error "Project directory not found: $project_dir"
+        exit 1
+    fi
+    
+    # Parse command line options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --board)
+                BOARD_TYPE="$2"
+                shift 2
+                ;;
+            --top)
+                TOP_MODULE="$2"
+                shift 2
+                ;;
+            --constraint)
+                CONSTRAINT_FILE="$2"
+                shift 2
+                ;;
+            --verbose)
+                set -x
+                shift
+                ;;
+            --help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                exit 1
+                ;;
+        esac
+    done
+    
+    # Load project configuration
+    load_project_config "$project_dir"
+    
+    # Execute command
+    case "$command" in
+        build)
+            cmd_build "$project_dir"
+            ;;
+        prog)
+            cmd_prog "$project_dir"
+            ;;
+        flash)
+            cmd_flash "$project_dir"
+            ;;
+        sim)
+            cmd_sim "$project_dir"
+            ;;
+        wave)
+            cmd_wave "$project_dir"
+            ;;
+        *)
+            log_error "Unknown command: $command"
+            show_usage
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"

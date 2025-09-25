@@ -5,8 +5,8 @@
 # Save current directory
 ORIGINAL_DIR=$(pwd)
 
-# Change to tools/oss-cad-suite directory
-cd tools/oss-cad-suite
+# Change to fpga_toolchain/oss-cad-suite directory
+cd /c/Users/edste/Projects/fpga_toolchain/oss-cad-suite
 
 # Get the absolute path to OSS CAD Suite (Windows format for tools)
 if command -v cygpath >/dev/null 2>&1; then

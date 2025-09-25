@@ -11,5 +11,67 @@
         }
     },
     "terminal.integrated.tabs.enabled": true,
-    "terminal.integrated.tabs.showActions": "singleTerminal"
+    "terminal.integrated.tabs.showActions": "singleTerminal",
+    // Verilog/SystemVerilog formatting settings
+    "verilog.linting.linter": "none",
+    "verilog.ctags.path": "",
+    // File associations for Verilog
+    "files.associations": {
+        "*.v": "verilog",
+        "*.vh": "verilog",
+        "*.sv": "systemverilog",
+        "*.svh": "systemverilog"
+    },
+    // Format on save for Verilog files using Verible
+    "[verilog]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "chipsalliance.verible",
+        "editor.trimAutoWhitespace": true,
+        "files.trimTrailingWhitespace": true
+    },
+    "[systemverilog]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "chipsalliance.verible",
+        "editor.trimAutoWhitespace": true,
+        "files.trimTrailingWhitespace": true
+    },
+    // Verible formatter settings
+    "verible.format.args": [
+        "--indentation_spaces=2",
+        "--wrap_spaces=2",
+        "--assignment_statement_alignment=infer",
+        "--case_items_alignment=infer",
+        "--class_member_variables_alignment=infer",
+        "--formal_parameters_alignment=infer",
+        "--named_parameter_alignment=infer",
+        "--named_port_alignment=infer",
+        "--port_declarations_alignment=infer"
+    ],
+    // TerosHDL settings - optimized for better formatting
+    "teroshdl.general.formatter": "istyle",
+    "teroshdl.general.linter": "none",
+    "teroshdl.formatter.istyle.indentStyle": "allman",
+    "teroshdl.formatter.istyle.indentSize": 2,
+    "teroshdl.formatter.istyle.removeEmptyLines": true,
+    "teroshdl.formatter.istyle.addEmptyLineAfterModule": true,
+    "teroshdl.formatter.istyle.addEmptyLineAfterAlways": false,
+    "teroshdl.formatting.istyle.indentationSize": 2,
+    "teroshdl.formatting.istyle.addSpaceAfterIf": true,
+    "teroshdl.formatting.istyle.addSpaceAfterFor": true,
+    "teroshdl.formatting.istyle.addSpaceAfterWhile": true,
+    "teroshdl.formatting.istyle.addSpaceAfterSwitch": true,
+    // SystemVerilog formatter settings to reduce convergence issues
+    "systemverilog-formatter.veribleFormatArgs": [
+        "--indentation_spaces=2",
+        "--assignment_statement_alignment=infer",
+        "--case_items_alignment=infer",
+        "--class_member_variables_alignment=infer",
+        "--formal_parameters_alignment=infer",
+        "--named_parameter_alignment=infer",
+        "--named_port_alignment=infer",
+        "--port_declarations_alignment=infer",
+        "--struct_union_members_alignment=infer",
+        "--try_wrap_long_lines=true",
+        "--wrap_spaces=2"
+    ]
 }
