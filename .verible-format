@@ -3,7 +3,12 @@
 
 # Indentation settings
 --indentation_spaces=2
---wrap_spaces=2
+--wrap_spaces=4
+
+# Line length and wrapping
+--column_limit=100
+--try_wrap_long_lines=true
+--wrap_end_else_clauses=false
 
 # Alignment options
 --assignment_statement_alignment=infer
@@ -15,8 +20,22 @@
 --port_declarations_alignment=infer
 --struct_union_members_alignment=infer
 
-# Line wrapping
---try_wrap_long_lines=true
+# Function call formatting
+--format_long_function_calls=true
+--function_call_parameters_alignment=infer
 
-# Spacing settings - should preserve operators like !==
+# Concatenation and expression formatting
+--format_concat_braces=true
+--wrap_long_concatenations=true
+
+# Conditional formatting
+--wrap_conditional_expressions=true
+
+# Blank line management
+--remove_blank_lines_at_eof=true
+--compact_indexing_and_selections=false
+--max_blank_lines=2
+
+# Spacing settings
 --preserve_formatting=false
+--spaces_around_operators=true
