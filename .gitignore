@@ -29,10 +29,6 @@ modelsim.ini
 *.wdb
 *.ghw
 
-# Tool-specific directories - ignore all files
-tools/oss-cad-suite/*
-tools/cc65/*
-
 # Operating system files
 .DS_Store
 .DS_Store?
