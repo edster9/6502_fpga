@@ -1,0 +1,189 @@
+# Tang Primer 25K constraints template
+# Based on J3 connector pinout - 2x20P header
+# NOTE: Pin locations need to be verified against board documentation
+
+# Clock input - 50MHz crystal (standard location)
+IO_LOC "clk" E2;
+IO_PORT "clk" PULL_MODE=UP DRIVE=OFF;
+
+# J3 Connector Pin Assignments - TEMPLATE
+# These pin locations (A1, B2, etc.) need to be mapped from board documentation
+# The signal names from the connector diagram are shown in comments
+
+# J3 Right side pins (even numbers) - NEED PROPER PIN MAPPING
+IO_LOC "j3_pin2" A1;   # K1_IOR20A_40P (Pin 2)
+IO_LOC "j3_pin4" B1;   # L2_IOR18A_40P (Pin 4)
+IO_LOC "j3_pin6" C1;   # J4_IOR22A_40P (Pin 6)
+IO_LOC "j3_pin8" D1;   # G2_IOR21A_40P (Pin 8)
+IO_LOC "j3_pin10" E1;  # L4_IOR31A_40P (Pin 10)
+# Pin 12 is GND
+IO_LOC "j3_pin14" F1;  # B2_IOB4A_40P (Pin 14)
+IO_LOC "j3_pin16" G1;  # F2_IOB2A_40P (Pin 16)
+IO_LOC "j3_pin18" H1;  # E1_IOB12B_40P (Pin 18)
+IO_LOC "j3_pin20" J1;  # E3_IOB60A_40P (Pin 20)
+IO_LOC "j3_pin22" K1;  # J1_IOR33A_40P (Pin 22)
+IO_LOC "j3_pin24" L1;  # J0_IOB89A_40P (Pin 24)
+IO_LOC "j3_pin26" A2;  # H1_IOB91A_40P (Pin 26)
+IO_LOC "j3_pin28" B2;  # K7_IOT21A_40P (Pin 28)
+IO_LOC "j3_pin30" C2;  # L7_IOT19A_40P (Pin 30)
+IO_LOC "j3_pin32" D2;  # L10_IOT15A_40P (Pin 32)
+IO_LOC "j3_pin34" E2;  # L9_IOT31A_40P (Pin 34)
+IO_LOC "j3_pin36" F2;  # J8_IOT56A_40P (Pin 36)
+IO_LOC "j3_pin38" G2;  # F7_IOT56A_40P (Pin 38)
+IO_LOC "j3_pin40" H2;  # J11_IOT1A_40P (Pin 40)
+
+# J3 Left side pins (odd numbers) - NEED PROPER PIN MAPPING
+IO_LOC "j3_pin1" A3;   # K2_IOR20B_40P (Pin 1)
+IO_LOC "j3_pin3" B3;   # L1_IOR18B_40P (Pin 3)
+IO_LOC "j3_pin5" C3;   # K4_IOR22B_40P (Pin 5)
+IO_LOC "j3_pin7" D3;   # G1_IOR21B_40P (Pin 7)
+IO_LOC "j3_pin9" E3;   # L3_IOR31B_40P (Pin 9)
+# Pin 11 is +5V
+IO_LOC "j3_pin13" F3;  # C2_IOB4B_40P (Pin 13)
+IO_LOC "j3_pin15" G3;  # F1_IOB2B_40P (Pin 15)
+IO_LOC "j3_pin17" H3;  # A1_IOB24A_40P (Pin 17)
+IO_LOC "j3_pin19" J3;  # D1_IOB14B_40P (Pin 19)
+IO_LOC "j3_pin21" K3;  # J2_IOR33B_40P (Pin 21)
+IO_LOC "j3_pin23" L3;  # H4_IOB89B_40P (Pin 23)
+IO_LOC "j3_pin25" A4;  # H2_IOB91B_40P (Pin 25)
+IO_LOC "j3_pin27" B4;  # I7_IOT21B_40P (Pin 27)
+IO_LOC "j3_pin29" C4;  # L8_IOT19B_40P (Pin 29)
+IO_LOC "j3_pin31" D4;  # K10_IOT15B_40P (Pin 31)
+IO_LOC "j3_pin33" E4;  # K9_IOT31B_40P (Pin 33)
+IO_LOC "j3_pin35" F4;  # K8_IOT56B_40P (Pin 35)
+IO_LOC "j3_pin37" G4;  # F6_IOT56B_40P (Pin 37)
+IO_LOC "j3_pin39" H4;  # J10_IOT1B_40P (Pin 39)
+
+# Standard IO port settings (adjust DRIVE strength as needed)
+# Input pins
+IO_PORT "j3_pin1" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin2" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin3" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin4" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin5" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin6" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin7" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin8" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin9" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin10" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin13" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin14" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin15" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin16" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin17" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin18" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin19" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin20" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin21" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin22" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin23" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin24" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin25" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin26" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin27" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin28" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin29" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin30" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin31" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin32" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin33" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin34" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin35" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin36" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin37" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin38" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin39" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "j3_pin40" PULL_MODE=UP DRIVE=OFF;
+
+# 8-pin PMOD1 connector (generic GPIO)
+IO_LOC "pmod1[0]" G5;   # PMOD1 pin 1 (top row)
+IO_LOC "pmod1[1]" F5;   # PMOD1 pin 2 (top row)
+IO_LOC "pmod1[2]" G7;   # PMOD1 pin 3 (top row)
+IO_LOC "pmod1[3]" G8;   # PMOD1 pin 4 (top row)
+# PMOD1 pins 5-6: GND, 3.3V (not assignable)
+IO_LOC "pmod1[4]" H7;   # PMOD1 pin 7 (bottom row)
+IO_LOC "pmod1[5]" H8;   # PMOD1 pin 8 (bottom row)
+IO_LOC "pmod1[6]" H5;   # PMOD1 pin 9 (bottom row)
+IO_LOC "pmod1[7]" J5;   # PMOD1 pin 10 (bottom row)
+# PMOD1 pins 11-12: GND, 3.3V (not assignable)
+
+# 8-pin PMOD2 connector (generic GPIO)
+IO_LOC "pmod2[0]" A11;  # PMOD2 pin 1 (top row)
+IO_LOC "pmod2[1]" E11;  # PMOD2 pin 2 (top row)
+IO_LOC "pmod2[2]" K11;  # PMOD2 pin 3 (top row)
+IO_LOC "pmod2[3]" L5;   # PMOD2 pin 4 (top row)
+# PMOD2 pins 5-6: GND, 3.3V (not assignable)
+IO_LOC "pmod2[4]" A10;  # PMOD2 pin 7 (bottom row)
+IO_LOC "pmod2[5]" E10;  # PMOD2 pin 8 (bottom row)
+IO_LOC "pmod2[6]" L11;  # PMOD2 pin 9 (bottom row)
+IO_LOC "pmod2[7]" K5;   # PMOD2 pin 10 (bottom row)
+# PMOD2 pins 11-12: GND, 3.3V (not assignable)
+
+# 8-pin PMOD3 connector (generic GPIO)
+IO_LOC "pmod3[0]" G11;  # PMOD3 pin 1 (top row)
+IO_LOC "pmod3[1]" D11;  # PMOD3 pin 2 (top row)
+IO_LOC "pmod3[2]" B11;  # PMOD3 pin 3 (top row)
+IO_LOC "pmod3[3]" C11;  # PMOD3 pin 4 (top row)
+# PMOD3 pins 5-6: GND, 3.3V (not assignable)
+IO_LOC "pmod3[4]" G10;  # PMOD3 pin 7 (bottom row)
+IO_LOC "pmod3[5]" D10;  # PMOD3 pin 8 (bottom row)
+IO_LOC "pmod3[6]" B10;  # PMOD3 pin 9 (bottom row)
+IO_LOC "pmod3[7]" C10;  # PMOD3 pin 10 (bottom row)
+# PMOD3 pins 11-12: GND, 3.3V (not assignable)
+
+# Default PMOD IO_PORT settings - all pins as inputs with pullups
+# PMOD1 default settings
+IO_PORT "pmod1[0]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[1]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[2]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[3]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[4]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[5]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[6]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod1[7]" PULL_MODE=UP DRIVE=OFF;
+
+# PMOD2 default settings
+IO_PORT "pmod2[0]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[1]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[2]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[3]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[4]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[5]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[6]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod2[7]" PULL_MODE=UP DRIVE=OFF;
+
+# PMOD3 default settings
+IO_PORT "pmod3[0]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[1]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[2]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[3]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[4]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[5]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[6]" PULL_MODE=UP DRIVE=OFF;
+IO_PORT "pmod3[7]" PULL_MODE=UP DRIVE=OFF;
+
+# PMOD1, PMOD2, and PMOD3 IO_PORT settings examples:
+#
+# For PMOD1 pins (if using as switch inputs):
+# IO_PORT "pmod1[0]" PULL_MODE=UP DRIVE=OFF;     # Input with pullup resistor
+# IO_PORT "pmod1[1]" PULL_MODE=UP DRIVE=OFF;     # (switches pull to ground when pressed)
+#
+# For PMOD1 pins (if using as general inputs):
+# IO_PORT "pmod1[0]" PULL_MODE=NONE DRIVE=OFF;   # Input without pullup
+# IO_PORT "pmod1[1]" PULL_MODE=DOWN DRIVE=OFF;   # Input with pulldown resistor
+#
+# For PMOD2 pins (if using as LED outputs):
+# IO_PORT "pmod2[0]" PULL_MODE=NONE DRIVE=8;     # Output with 8mA drive strength
+# IO_PORT "pmod2[1]" PULL_MODE=NONE DRIVE=8;     # (suitable for LEDs)
+#
+# For PMOD3 pins (generic GPIO - configure as needed):
+# IO_PORT "pmod3[0]" PULL_MODE=UP DRIVE=OFF;     # Configure as input with pullup
+# IO_PORT "pmod3[1]" PULL_MODE=NONE DRIVE=8;     # Configure as output with 8mA drive
+#
+# For PMOD2/PMOD3 pins (if using as general outputs):
+# IO_PORT "pmod2[0]" PULL_MODE=NONE DRIVE=4;     # Output with 4mA drive (low power)
+# IO_PORT "pmod2[1]" PULL_MODE=NONE DRIVE=16;    # Output with 16mA drive (high current)
+#
+# Available PULL_MODE options: UP, DOWN, NONE
+# Available DRIVE options: 4, 8, 16 (mA)
+# For inputs, always use DRIVE=OFF
