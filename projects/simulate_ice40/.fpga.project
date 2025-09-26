@@ -1,0 +1,6 @@
+[board]
+type = ice40
+
+[build]
+top_module = LED_Blink
+constraint_file = goboard_ice40.pcf
