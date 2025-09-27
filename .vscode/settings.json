@@ -12,6 +12,11 @@
     },
     "terminal.integrated.tabs.enabled": true,
     "terminal.integrated.tabs.showActions": "singleTerminal",
+    
+    // Global format on save settings
+    "editor.formatOnSave": true,
+    "editor.formatOnType": false,
+    "editor.formatOnPaste": true,
     // Verilog/SystemVerilog formatting settings
     "verilog.linting.linter": "none",
     "verilog.ctags.path": "",
@@ -27,13 +32,17 @@
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "chipsalliance.verible",
         "editor.trimAutoWhitespace": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
     },
     "[systemverilog]": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "chipsalliance.verible",
         "editor.trimAutoWhitespace": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
     },
     // Verible formatter settings
     "verible.format.args": [

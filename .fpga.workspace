@@ -1,6 +1,6 @@
 [toolchain]
 # Path to OSS CAD Suite installation
-oss_cad_suite_path = /c/Users/edste/Projects/fpga_toolchain/oss-cad-suite
+oss_cad_suite_path = /home/edster/projects/electronics/oss-cad-suite
 
 [workspace]
 # Workspace-level settings
